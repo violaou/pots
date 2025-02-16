@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "viola-pots",
+    "pots": "viola-pots"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
