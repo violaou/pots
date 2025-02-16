@@ -12,6 +12,12 @@ Build: `npm run build --base=/dist/`
 
 Deploy: `firebase deploy --only hosting`
 
+### build production, mode development
+`vite build --mode development`
+
+https://vite.dev/guide/env-and-mode.html#modes
+
+
 ---
 
 ### Troubleshooting
