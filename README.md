@@ -1,6 +1,6 @@
-# front-window
+# pots
 
-### My front page
+### My pottery page
 
 ### Run
 
