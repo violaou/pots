@@ -1,3 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@layer base {
+  body {
+    @apply text-white;
+    /* @apply bg-black; */
+    font-family: "Instrument Serif", serif, sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    letter-spacing: normal;
+  }
+}
+
+@layer utilities {
+  .font-sans {
+    font-family: "Instrument Serif", system-ui, -apple-system, sans-serif;
+  }
+}

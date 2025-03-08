@@ -1,9 +1,8 @@
-import React from 'react'
 import { Construction, Instagram } from 'lucide-react'
 
-export const UnderConstruction: React.FC = () => {
+export const UnderConstruction = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white ">
       <Construction className="w-16 h-16 text-gray-400 mb-6" />
       <h1 className="text-2xl font-medium text-gray-900 mb-3 text-center">
         Portfolio Coming Soon

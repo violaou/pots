@@ -9,7 +9,7 @@
     "start": "vite",
     "lint": "eslint .",
     "preview": "vite preview",
-    "publish": "build && firebase deploy --only hosting"
+    "publish": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "@fillout/react": "^1.1.2",

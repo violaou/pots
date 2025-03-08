@@ -1,22 +1,22 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { artworks } from '../data/artworks';
+import React from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
+import { artworks } from '../assets/artworks'
 
 export const ArtworkDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const artwork = artworks.find(a => a.id === id);
+  const { id } = useParams<{ id: string }>()
+  const artwork = artworks.find((a) => a.id === id)
 
   if (!artwork) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-lg text-gray-600">Artwork not found</p>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-white py-8">
+    <div className="min-h-screen py-8">
       <div className="max-w-5xl mx-auto px-4">
         <Link
           to="/"
@@ -25,7 +25,7 @@ export const ArtworkDetail: React.FC = () => {
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back
         </Link>
-        
+
         <div className="grid md:grid-cols-2 gap-8">
           <div className="aspect-square bg-gray-50">
             <img
@@ -39,7 +39,7 @@ export const ArtworkDetail: React.FC = () => {
               {artwork.title}
             </h1>
             <p className="text-gray-600">{artwork.description}</p>
-            
+
             <div className="space-y-4 pt-4">
               <div className="flex justify-between py-2 border-t border-gray-100">
                 <span className="text-gray-500">Year</span>
@@ -64,5 +64,5 @@ export const ArtworkDetail: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

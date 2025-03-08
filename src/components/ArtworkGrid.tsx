@@ -1,9 +1,9 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArtworkItem } from '../types';
+import React from 'react'
+import { Link } from 'react-router-dom'
+import { ArtworkItem } from '../types'
 
 interface ArtworkGridProps {
-  artworks: ArtworkItem[];
+  artworks: ArtworkItem[]
 }
 
 export const ArtworkGrid: React.FC<ArtworkGridProps> = ({ artworks }) => {
@@ -15,7 +15,7 @@ export const ArtworkGrid: React.FC<ArtworkGridProps> = ({ artworks }) => {
           to={`/artwork/${artwork.id}`}
           className="block aspect-square"
         >
-          <div className="w-full h-full bg-gray-50 overflow-hidden">
+          <div className="w-full h-full overflow-hidden">
             <img
               src={artwork.imageUrl}
               alt={artwork.title}
@@ -25,5 +25,5 @@ export const ArtworkGrid: React.FC<ArtworkGridProps> = ({ artworks }) => {
         </Link>
       ))}
     </div>
-  );
-};
+  )
+}
