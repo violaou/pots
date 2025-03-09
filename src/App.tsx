@@ -27,7 +27,7 @@ function App() {
       <div className="min-h-screen">
         <TopBar />
         <Sidebar />
-        <div className="lg:pl-64 pt-16 lg:pt-0">
+        <div className="lg:pl-64 pt-16 lg:pt-0" id="main-content">
           <Routes>
             {/* <Route
               path="/"
@@ -43,6 +43,7 @@ function App() {
             <Route path="/artwork/:id" element={<ArtworkDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/gallery" element={<UnderConstruction />} />
           </Routes>
         </div>
       </div>

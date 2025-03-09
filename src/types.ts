@@ -8,3 +8,8 @@ export interface ArtworkItem {
   dimensions: string;
   price?: string;
 }
+
+export interface NavItem {
+  path: string
+  label: string
+}
