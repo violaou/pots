@@ -2,6 +2,48 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import type { BlogPost } from '../types'
 import { getBlogPosts } from '../firebase/blogService'
+import { useAuth } from '../contexts/AuthContext'
+
+function CreatePostButton() {
+  const { isAuthenticated, loading: authLoading } = useAuth()
+
+  if (authLoading) {
+    return (
+      <div className="w-32 h-10 bg-gray-200 animate-pulse rounded-md"></div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
+
+  return (
+    <Link
+      to="/blog/create"
+      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+    >
+      Create New Post
+    </Link>
+  )
+}
+
+function BlogHeader() {
+  return (
+    <div className="flex justify-between items-center mb-8">
+      <h1 className="text-4xl font-bold">Blog</h1>
+      <CreatePostButton />
+    </div>
+  )
+}
+
+function BlogLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <BlogHeader />
+      {children}
+    </div>
+  )
+}
 
 export default function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([])
@@ -26,70 +68,34 @@ export default function Blog() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Blog</h1>
-          <Link
-            to="/blog/create"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Create New Post
-          </Link>
-        </div>
+      <BlogLayout>
         <div className="text-center py-8">Loading...</div>
-      </div>
+      </BlogLayout>
     )
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Blog</h1>
-          <Link
-            to="/blog/create"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Create New Post
-          </Link>
-        </div>
+      <BlogLayout>
         <div className="text-center text-red-600 py-8">{error}</div>
-      </div>
+      </BlogLayout>
     )
   }
 
   if (posts.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Blog</h1>
-          <Link
-            to="/blog/create"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Create New Post
-          </Link>
-        </div>
+      <BlogLayout>
         <div className="text-center py-12">
           <p className="text-xl text-gray-600 mb-4">
             Looks like there are no blog posts yet!
           </p>
         </div>
-      </div>
+      </BlogLayout>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Blog</h1>
-        <Link
-          to="/blog/create"
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Create New Post
-        </Link>
-      </div>
+    <BlogLayout>
       <div className="grid gap-8">
         {posts.map((post) => (
           <Link
@@ -99,12 +105,12 @@ export default function Blog() {
           >
             <article className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-semibold mb-2">{post.title}</h2>
-              <div className="text-sm text-gray-600 mb-4">
+              <div className="text-sm text-black mb-4">
                 <span>By {post.author}</span>
                 <span className="mx-2">•</span>
                 <span>{new Date(post.date).toLocaleDateString()}</span>
               </div>
-              <p className="text-gray-700 mb-4">{post.excerpt}</p>
+              <p className="text-black mb-4 line-clamp-3">{post.content}</p>
               {post.tags && (
                 <div className="flex gap-2">
                   {post.tags.map((tag) => (
@@ -121,6 +127,6 @@ export default function Blog() {
           </Link>
         ))}
       </div>
-    </div>
+    </BlogLayout>
   )
 }

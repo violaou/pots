@@ -32,7 +32,7 @@ export default function BlogPost() {
       <div className="container mx-auto px-4 py-8">
         <Link
           to="/blog"
-          className="text-blue-600 hover:text-blue-800 mb-4 inline-block"
+          className="text-green-600 hover:text-green-800 mb-4 inline-block"
         >
           ← Back to Blog
         </Link>
@@ -46,7 +46,7 @@ export default function BlogPost() {
       <div className="container mx-auto px-4 py-8">
         <Link
           to="/blog"
-          className="text-blue-600 hover:text-blue-800 mb-4 inline-block"
+          className="text-green-600 hover:text-green-800 mb-4 inline-block"
         >
           ← Back to Blog
         </Link>
@@ -60,13 +60,13 @@ export default function BlogPost() {
     <div className="container mx-auto px-4 py-8">
       <Link
         to="/blog"
-        className="text-blue-600 hover:text-blue-800 mb-4 inline-block"
+        className="text-green-600 hover:text-green-800 mb-4 inline-block"
       >
         ← Back to Blog
       </Link>
       <article className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-        <div className="text-sm text-gray-600 mb-6">
+        <h1 className="text-4xl  text-black font-bold mb-4">{post.title}</h1>
+        <div className="text-sm text-black mb-6">
           <span>By {post.author}</span>
           <span className="mx-2">•</span>
           <span>{new Date(post.date).toLocaleDateString()}</span>
@@ -78,7 +78,7 @@ export default function BlogPost() {
             className="w-full h-64 object-cover rounded-lg mb-6"
           />
         )}
-        <div className="prose max-w-none">
+        <div className="prose max-w-none text-black">
           {post.content.split('\n').map((paragraph, i) => (
             <p key={i} className="mb-4">
               {paragraph}

@@ -28,10 +28,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-console.log('Firebase Config:', {
-  ...firebaseConfig,
-  apiKey: '***' // Don't log the actual API key
-})
+if (import.meta.env.DEV) {
+  console.log('Firebase Config:', {
+    ...firebaseConfig,
+  })
+}
 
 // Initialize Firebase
 let app

@@ -5,19 +5,27 @@ import violaPotsLogo from '../assets/viola-pots.png'
 import { NavItem } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 
-export const navItems: NavItem[] = [
-  { path: '/gallery', label: 'Gallery' },
-  { path: '/blog', label: 'Blog' },
-  { path: '/about', label: 'About' },
-  { path: '/contact', label: 'Contact' },
-  { path: '/login', label: 'Login' }
-]
+export const getNavItems = (isAuthenticated: boolean): NavItem[] => {
+  const items: NavItem[] = [
+    { path: '/gallery', label: 'Gallery' },
+    { path: '/blog', label: 'Blog' },
+    { path: '/about', label: 'About' },
+    { path: '/contact', label: 'Contact' }
+  ]
+
+  if (!isAuthenticated) {
+    items.push({ path: '/login', label: 'Login' })
+  }
+
+  return items
+}
 
 export const TopBar: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { isAuthenticated, logout } = useAuth()
+  const navItems = getNavItems(isAuthenticated)
 
   // Add/remove blur class to main content when menu opens/closes
   useEffect(() => {

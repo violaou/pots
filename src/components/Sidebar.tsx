@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import violaPotsLogo from '../assets/viola-pots.png'
-import { navItems } from './TopBar'
+import { getNavItems } from './TopBar'
 import { useAuth } from '../contexts/AuthContext'
 import { LogOut } from 'lucide-react'
 
@@ -8,6 +8,7 @@ export const Sidebar = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { isAuthenticated, logout } = useAuth()
+  const navItems = getNavItems(isAuthenticated)
 
   const handleLogout = () => {
     logout()
@@ -35,7 +36,11 @@ export const Sidebar = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`block py-1 ${isActive ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                className={`block py-1 ${
+                  isActive
+                    ? 'text-gray-900'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
               >
                 {item.label}
               </Link>

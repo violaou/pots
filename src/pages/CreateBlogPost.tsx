@@ -2,19 +2,22 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { BlogPost } from '../types'
 import { createBlogPost } from '../firebase/blogService'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function CreateBlogPost() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [formData, setFormData] = useState<Omit<BlogPost, 'id'>>({
     title: '',
     content: '',
-    author: '',
+    author: user?.displayName || '',
     date: new Date().toISOString().split('T')[0],
-    excerpt: '',
     tags: []
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,7 +25,15 @@ export default function CreateBlogPost() {
     setError(null)
 
     try {
-      await createBlogPost(formData)
+      let imageUrl = formData.imageUrl
+      if (imageFile) {
+        // imageUrl = await uploadImage(imageFile)
+      }
+
+      await createBlogPost({
+        ...formData,
+        imageUrl
+      })
       navigate('/blog')
     } catch (err) {
       setError('Failed to create blog post')
@@ -42,6 +53,18 @@ export default function CreateBlogPost() {
   const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const tags = e.target.value.split(',').map((tag) => tag.trim())
     setFormData((prev) => ({ ...prev, tags }))
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   return (
@@ -67,7 +90,7 @@ export default function CreateBlogPost() {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
               required
               disabled={loading}
             />
@@ -86,28 +109,10 @@ export default function CreateBlogPost() {
               name="author"
               value={formData.author}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
               required
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="excerpt"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Excerpt
-            </label>
-            <textarea
-              id="excerpt"
-              name="excerpt"
-              value={formData.excerpt}
-              onChange={handleChange}
-              rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-              disabled={loading}
+              disabled={true}
+              readOnly
             />
           </div>
 
@@ -124,10 +129,42 @@ export default function CreateBlogPost() {
               value={formData.content}
               onChange={handleChange}
               rows={10}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
               required
               disabled={loading}
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="image"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Featured Image
+            </label>
+            <input
+              type="file"
+              id="image"
+              name="image"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-1 block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-green-50 file:text-green-700
+                hover:file:bg-green-100"
+              disabled={loading}
+            />
+            {imagePreview && (
+              <div className="mt-4">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="max-h-64 rounded-lg"
+                />
+              </div>
+            )}
           </div>
 
           <div>
@@ -143,7 +180,7 @@ export default function CreateBlogPost() {
               name="tags"
               value={formData.tags?.join(', ')}
               onChange={handleTagsChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
               disabled={loading}
             />
           </div>
@@ -151,7 +188,7 @@ export default function CreateBlogPost() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Post'}
