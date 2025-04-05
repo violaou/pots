@@ -1,6 +1,12 @@
-# pots
+# [pots.violaou.com](https://pots.violaou.com)
 
-### My pottery page
+A personal website showcasing my pottery artwork and blog posts.
+
+## Features
+
+- Blog posts
+- Artwork gallery
+- About me
 
 ### Run
 
