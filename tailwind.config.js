@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}']
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   // theme: {
   //   extend: {},
   //   colors: {
@@ -31,5 +31,23 @@ export default {
   //     serif: ['Instrument Serif', 'serif']
   //   }
   // },
-  // plugins: []
+  theme: {
+    extend: {
+      animation: {
+        'spin-slow': 'spin 3s linear infinite',
+        'spin-x': 'spinX 3s linear infinite'
+      },
+      keyframes: {
+        spin: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' }
+        },
+        spinX: {
+          '0%': { transform: 'rotateX(0deg)' },
+          '100%': { transform: 'rotateX(360deg)' }
+        }
+      }
+    }
+  },
+  plugins: []
 }

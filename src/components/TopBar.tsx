@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Menu, X, LogOut } from 'lucide-react'
 import violaPotsLogo from '../assets/viola-pots.png'
 import { NavItem } from '../types'
+import { useAuth } from '../contexts/AuthContext'
 
 export const navItems: NavItem[] = [
   { path: '/gallery', label: 'Gallery' },
+  { path: '/blog', label: 'Blog' },
   { path: '/about', label: 'About' },
-  { path: '/contact', label: 'Contact' }
+  { path: '/contact', label: 'Contact' },
+  { path: '/login', label: 'Login' }
 ]
 
 export const TopBar: React.FC = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { isAuthenticated, logout } = useAuth()
 
   // Add/remove blur class to main content when menu opens/closes
   useEffect(() => {
@@ -32,6 +37,11 @@ export const TopBar: React.FC = () => {
     }
   }, [isMenuOpen])
 
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 h-16 border-b border-gray-100 bg-white z-10 lg:hidden">
@@ -49,21 +59,32 @@ export const TopBar: React.FC = () => {
             </span>
           </Link>
 
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-gray-500 hover:text-gray-900 focus:outline-none transition-transform duration-200 ease-in-out"
-            aria-label="Toggle menu"
-          >
-            <Menu
-              size={24}
-              className={isMenuOpen ? 'opacity-0 absolute' : 'opacity-100'}
-            />
-            <X
-              size={24}
-              className={isMenuOpen ? 'opacity-100' : 'opacity-0 absolute'}
-              style={{ marginTop: isMenuOpen ? '0' : '-24px' }}
-            />
-          </button>
+          <div className="flex items-center space-x-4">
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-900 focus:outline-none"
+                aria-label="Logout"
+              >
+                <LogOut size={20} />
+              </button>
+            )}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-500 hover:text-gray-900 focus:outline-none transition-transform duration-200 ease-in-out"
+              aria-label="Toggle menu"
+            >
+              <Menu
+                size={24}
+                className={isMenuOpen ? 'opacity-0 absolute' : 'opacity-100'}
+              />
+              <X
+                size={24}
+                className={isMenuOpen ? 'opacity-100' : 'opacity-0 absolute'}
+                style={{ marginTop: isMenuOpen ? '0' : '-24px' }}
+              />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -100,9 +121,9 @@ export const TopBar: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`block py-2 transition-colors duration-200 ${
+                  className={`block py-1 ${
                     isActive
-                      ? 'text-gray-900 font-medium'
+                      ? 'text-gray-900'
                       : 'text-gray-500 hover:text-gray-900'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
@@ -111,6 +132,17 @@ export const TopBar: React.FC = () => {
                 </Link>
               )
             })}
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  handleLogout()
+                  setIsMenuOpen(false)
+                }}
+                className="w-full text-left py-1 text-gray-500 hover:text-gray-900"
+              >
+                Logout
+              </button>
+            )}
           </nav>
         </div>
       </div>
