@@ -64,7 +64,7 @@ export default function BlogPost() {
       >
         ← Back to Blog
       </Link>
-      <article className="bg-white rounded-lg shadow-md p-6">
+      <article className="bg-soft-white rounded-lg shadow-md p-6">
         <h1 className="text-4xl  text-black font-bold mb-4">{post.title}</h1>
         <div className="text-sm text-black mb-6">
           <span>By {post.author}</span>

@@ -14,7 +14,7 @@ export const Login = () => {
     try {
       setError('')
       await login()
-      navigate(from, { replace: true })
+      navigate('/blog')
     } catch (err) {
       console.error('Login error:', err)
       if (err instanceof Error) {
@@ -43,17 +43,14 @@ export const Login = () => {
           <div>
             <button
               onClick={handleGoogleLogin}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-yellow-200 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
             >
               Sign in with Google
             </button>
           </div>
 
           <div className="text-sm text-center">
-            <Link
-              to="/"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            <Link to="/blog" className="text-black hover:text-gray-700">
               Back to home
             </Link>
           </div>

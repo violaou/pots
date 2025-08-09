@@ -28,10 +28,22 @@ function CreatePostButton() {
 }
 
 function BlogHeader() {
+  const { isAuthenticated, loading: authLoading } = useAuth()
+
   return (
     <div className="flex justify-between items-center mb-8">
-      <h1 className="text-4xl font-bold">Blog</h1>
-      <CreatePostButton />
+      <h1 className="text-4xl font-bold text-gray-900">Blog</h1>
+      <div className="flex gap-3">
+        <CreatePostButton />
+        {!authLoading && !isAuthenticated && (
+          <Link
+            to="/login"
+            className="bg-yellow-200 text-black px-4 py-2 rounded-md hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+          >
+            Login
+          </Link>
+        )}
+      </div>
     </div>
   )
 }
@@ -103,7 +115,7 @@ export default function Blog() {
             to={`/blog/${post.id}`}
             className="block hover:shadow-lg transition-shadow duration-200"
           >
-            <article className="bg-white rounded-lg shadow-md p-6">
+            <article className="bg-soft-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-semibold mb-2">{post.title}</h2>
               <div className="text-sm text-black mb-4">
                 <span>By {post.author}</span>

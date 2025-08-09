@@ -46,8 +46,22 @@ export default {
           '0%': { transform: 'rotateX(0deg)' },
           '100%': { transform: 'rotateX(360deg)' }
         }
+      },
+      colors: {
+        'soft-white': '#fefcf9'
       }
     }
   },
-  plugins: []
+  plugins: [],
+  corePlugins: {
+    textColor: true
+  },
+  important: true,
+  theme: {
+    extend: {
+      textColor: {
+        DEFAULT: '#000000'
+      }
+    }
+  }
 }

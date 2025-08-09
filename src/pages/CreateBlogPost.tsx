@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { BlogPost } from '../types'
 import { createBlogPost } from '../firebase/blogService'
+import { uploadImage } from '../firebase/imageService'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function CreateBlogPost() {
@@ -27,7 +28,7 @@ export default function CreateBlogPost() {
     try {
       let imageUrl = formData.imageUrl
       if (imageFile) {
-        // imageUrl = await uploadImage(imageFile)
+        imageUrl = await uploadImage(imageFile)
       }
 
       await createBlogPost({

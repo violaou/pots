@@ -1,0 +1,120 @@
+{
+  "ignoredFiles": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".cache/**",
+    "*.log",
+    "coverage/**",
+    ".DS_Store",
+    "src/.DS_Store"
+  ],
+  "docs": [
+    {
+      "name": "App Routing",
+      "patterns": ["Route", "Routes", "BrowserRouter", "Link", "useNavigate"],
+      "files": ["src/App.tsx"],
+      "description": "Main application routing setup using React Router."
+    },
+    {
+      "name": "Artwork Components",
+      "patterns": ["ArtworkGrid", "ArtworkDetail"],
+      "files": ["src/components/ArtworkGrid.tsx", "src/components/ArtworkDetail.tsx"],
+      "description": "Components related to displaying artworks."
+    },
+    {
+      "name": "Core UI Components",
+      "patterns": ["TopBar", "Sidebar"],
+      "files": ["src/components/TopBar.tsx", "src/components/Sidebar.tsx"],
+      "description": "Main UI layout components like TopBar and Sidebar."
+    },
+    {
+      "name": "Authentication",
+      "patterns": ["AuthProvider", "ProtectedRoute", "Login"],
+      "files": ["src/contexts/AuthContext.tsx", "src/components/ProtectedRoute.tsx", "src/pages/Login.tsx"],
+      "description": "Authentication logic, context, and related components/pages."
+    },
+    {
+      "name": "Blog Feature",
+      "patterns": ["Blog", "BlogPost", "CreateBlogPost"],
+      "files": ["src/pages/Blog.tsx", "src/pages/BlogPost.tsx", "src/pages/CreateBlogPost.tsx"],
+      "description": "Components and pages related to the blog functionality."
+    },
+    {
+      "name": "Page Components",
+      "patterns": ["About", "Contact"],
+      "files": ["src/pages/About.tsx", "src/pages/Contact.tsx"],
+      "description": "General page components like About and Contact."
+    },
+    {
+        "name": "Artwork Data",
+        "patterns": ["artworks"],
+        "files": ["/artworks.ts"],
+        "description": "Data source for artworks. Assumes artworks.ts, adjust if it's .js or .json."
+    },
+    {
+        "name": "Firebase Configuration",
+        "patterns": ["firebaseConfig", "initializeApp"],
+        "files": ["src/firebase/firebaseConfig.ts"], "description": "Firebase setup and initialization."
+    },
+    {
+        "name": "Global Types",
+        "patterns": ["interface", "type"],
+        "files": ["src/types.ts"],
+        "description": "Global TypeScript type definitions for the application."
+    },
+    {
+        "name": "Application Entry Point",
+        "patterns": ["ReactDOM.createRoot", "root.render"],
+        "files": ["src/main.tsx"],
+        "description": "The main entry point for the React application."
+    }
+  ],
+  "definitions": [
+    {
+        "name": "Component",
+        "patterns": ["src/components/**/*.{ts,tsx}"],
+        "language": ["typescript", "typescriptreact"]
+    },
+    {
+        "name": "Page",
+        "patterns": ["src/pages/**/*.{ts,tsx}"],
+        "language": ["typescript", "typescriptreact"]
+    },
+    {
+        "name": "Context",
+        "patterns": ["src/contexts/**/*.{ts,tsx}"],
+        "language": ["typescript", "typescriptreact"]
+    },
+    {
+        "name": "Firebase Logic",
+        "patterns": ["src/firebase/**/*.{ts,tsx}"],
+        "language": ["typescript", "typescriptreact"]
+    },
+    {
+        "name": "Type Definition",
+        "patterns": ["src/types.ts"],
+        "language": "typescript"
+    },
+    {
+        "name": "Asset",
+        "patterns": ["src/assets/**/*.{ts,tsx,js,json,png,jpg,svg}"],
+        "language": ["typescript", "javascript", "json"]
+    },
+    {
+        "name": "Main Application Logic",
+        "patterns": ["src/App.tsx", "src/main.tsx"],
+        "language": "typescriptreact"
+    },
+    {
+        "name": "Vite Environment",
+        "patterns": ["src/vite-env.d.ts"],
+        "language": "typescript"
+    },
+    {
+        "name": "Global Styles",
+        "patterns": ["src/index.css"],
+        "language": "css"
+    }
+  ]
+}
