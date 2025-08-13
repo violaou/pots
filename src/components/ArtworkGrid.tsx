@@ -1,23 +1,32 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArtworkItem } from '../types'
+import type { ArtworkListItem } from '../types'
+import { listArtworks } from '../services/artwork-service'
 
-interface ArtworkGridProps {
-  artworks: ArtworkItem[]
-}
+export function ArtworkGrid() {
+  const [items, setItems] = useState<ArtworkListItem[]>([])
 
-export const ArtworkGrid: React.FC<ArtworkGridProps> = ({ artworks }) => {
+  useEffect(() => {
+    let isMounted = true
+    listArtworks().then((data) => {
+      if (isMounted) setItems(data)
+    })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
-      {artworks.map((artwork) => (
+      {items.map((artwork) => (
         <Link
           key={artwork.id}
-          to={`/artwork/${artwork.id}`}
+          to={`/gallery/${artwork.slug}`}
           className="block aspect-square"
         >
           <div className="w-full h-full overflow-hidden">
             <img
-              src={artwork.imageUrl}
+              src={artwork.heroImageUrl}
               alt={artwork.title}
               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             />

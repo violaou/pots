@@ -23,3 +23,36 @@ export interface BlogPost {
   imageUrl?: string;
   tags?: string[];
 }
+
+// New shared interfaces for artwork service (Phase 1)
+export interface ArtworkImage {
+  id: string
+  artworkId: string
+  imageUrl: string
+  alt?: string
+  sortOrder: number
+  isHero: boolean
+  createdAt: string
+}
+
+export interface Artwork {
+  id: string
+  slug: string
+  title: string
+  description?: string
+  materials?: string
+  clay?: string
+  cone?: number
+  isMicrowaveSafe: boolean
+  isDishwasherSafe: boolean
+  createdAt: string
+  updatedAt: string
+  images: ArtworkImage[]
+}
+
+export interface ArtworkListItem {
+  id: string
+  slug: string
+  title: string
+  heroImageUrl: string
+}

@@ -6,7 +6,6 @@ import {
   TopBar,
   Sidebar
 } from './components'
-import { artworks } from './artworks'
 import { useEffect } from 'react'
 import { Contact } from './pages/Contact'
 import About from './pages/About'
@@ -38,16 +37,10 @@ function App() {
             <Routes>
               <Route
                 path="/gallery"
-                element={
-                  isDev ? (
-                    <ArtworkGrid artworks={artworks} />
-                  ) : (
-                    <UnderConstruction />
-                  )
-                }
+                element={isDev ? <ArtworkGrid /> : <UnderConstruction />}
               />
               <Route path="/" element={<About />} />
-              <Route path="/artwork/:id" element={<ArtworkDetail />} />
+              <Route path="/gallery/:slug" element={<ArtworkDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/blog" element={<Blog />} />

@@ -6,15 +6,14 @@ export default defineConfig({
   plugins: [react()],
   root: '.',
   publicDir: './src/assets',
-  optimizeDeps: {
-  },
+  optimizeDeps: {},
   resolve: {
     alias: {
       '/@src': path.resolve(__dirname, '/./src'),
       '/@assets': path.resolve(__dirname, '/./src/assets')
     }
   },
-    build: {
+  build: {
     outDir: './dist'
-  }
-});
+  },
+})

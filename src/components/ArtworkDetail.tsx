@@ -1,12 +1,24 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { artworks } from '../artworks'
+import { getArtworkWithImages } from '../services/artwork-service'
+import type { Artwork, ArtworkImage } from '../types'
 
 export const ArtworkDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
+  const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const artwork = artworks.find((a) => a.id === id)
+  const [artwork, setArtwork] = useState<Artwork | null>(null)
+
+  useEffect(() => {
+    if (!slug) return
+    let isMounted = true
+    getArtworkWithImages(slug).then((data) => {
+      if (isMounted) setArtwork(data)
+    })
+    return () => {
+      isMounted = false
+    }
+  }, [slug])
 
   if (!artwork) {
     return (
@@ -28,42 +40,87 @@ export const ArtworkDetail: React.FC = () => {
         </button>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="aspect-square bg-gray-50">
-            <img
-              src={artwork.imageUrl}
-              alt={artwork.title}
-              className="w-full h-full object-cover"
-            />
+          <div className="space-y-6">
+            <HeroAndRelatedImages images={artwork.images} />
           </div>
           <div className="space-y-6">
             <h1 className="text-2xl font-medium text-gray-900">
               {artwork.title}
             </h1>
-            <p className="text-gray-600">{artwork.description}</p>
-
+            {artwork.description ? (
+              <p className="text-gray-600">{artwork.description}</p>
+            ) : null}
             <div className="space-y-4 pt-4">
-              <div className="flex justify-between py-2 border-t border-gray-100">
-                <span className="text-gray-500">Year</span>
-                <span>{artwork.year}</span>
-              </div>
-              <div className="flex justify-between py-2 border-t border-gray-100">
-                <span className="text-gray-500">Medium</span>
-                <span>{artwork.medium}</span>
-              </div>
-              <div className="flex justify-between py-2 border-t border-gray-100">
-                <span className="text-gray-500">Dimensions</span>
-                <span>{artwork.dimensions}</span>
-              </div>
-              {artwork.price && (
+              {/* {artwork.materials ? (
                 <div className="flex justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-500">Price</span>
-                  <span>{artwork.price}</span>
+                  <span className="text-gray-500">Materials</span>
+                  <span>{artwork.materials}</span>
                 </div>
-              )}
+              ) : null}
+              {typeof artwork.cone === 'number' ? (
+                <div className="flex justify-between py-2 border-t border-gray-100">
+                  <span className="text-gray-500">Firing Cone</span>
+                  <span>cone {artwork.cone}</span>
+                </div>
+              ) : null} */}
+              {/* <div className="flex justify-between py-2 border-t border-gray-100">
+                <span className="text-gray-500">Microwave Safe</span>
+                <span>{artwork.isMicrowaveSafe ? 'Yes' : 'No'}</span>
+              </div>
+              <div className="flex justify-between py-2 border-t border-gray-100">
+                <span className="text-gray-500">Dishwasher Safe</span>
+                <span>{artwork.isDishwasherSafe ? 'Yes' : 'No'}</span>
+              </div> */}
             </div>
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Sort the artwork images by their sort order,
+ * with the hero image first, then the rest by sort order.
+ */
+function sortArtworkImages(images: ArtworkImage[]): ArtworkImage[] {
+  return [...images].sort((a, b) => {
+    if (a.isHero && !b.isHero) return -1
+    if (!a.isHero && b.isHero) return 1
+    return a.sortOrder - b.sortOrder
+  })
+}
+
+function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
+  const ordered = useMemo(() => {
+    return sortArtworkImages(images)
+  }, [images])
+
+  if (!ordered.length) return null
+  const [hero, ...rest] = ordered
+
+  return (
+    <div className="space-y-6">
+      <div className="aspect-square bg-gray-50">
+        <img
+          src={hero.imageUrl}
+          alt={hero.alt ?? ''}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      {rest.length ? (
+        <div className="grid grid-cols-2 gap-4">
+          {rest.map((img) => (
+            <div key={img.id} className="aspect-square bg-gray-50">
+              <img
+                src={img.imageUrl}
+                alt={img.alt ?? ''}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
