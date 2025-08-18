@@ -15,14 +15,15 @@
   },
   "dependencies": {
     "@fillout/react": "^1.1.2",
+    "@supabase/supabase-js": "^2.55.0",
     "firebase": "^11.6.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.5",
     "styled-components": "^6.1.12",
-    "zod": "^3.23.8",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

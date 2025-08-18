@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import type { BlogPost } from '../types'
-import { getBlogPosts } from '../firebase/blogService'
+import { getBlogPosts } from '../services/blog-adapter'
 import { useAuth } from '../contexts/AuthContext'
 
 function CreatePostButton() {

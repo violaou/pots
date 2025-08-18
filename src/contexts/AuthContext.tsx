@@ -7,10 +7,15 @@ import {
 } from 'react'
 import { User as FirebaseUser } from 'firebase/auth'
 import {
-  signInWithGoogle,
-  logout as firebaseLogout,
-  onAuthStateChange
+  signInWithGoogle as fbSignIn,
+  logout as fbLogout,
+  onAuthStateChange as fbOnAuthStateChange
 } from '../firebase/authService'
+import {
+  signInWithGoogle as sbSignIn,
+  logout as sbLogout,
+  onAuthStateChange as sbOnAuthStateChange
+} from '../supabase/auth'
 
 interface User {
   email: string | null
@@ -50,8 +55,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChange((firebaseUser) => {
-      const mappedUser = mapFirebaseUser(firebaseUser)
+    const source =
+      (import.meta.env.VITE_DATA_SOURCE as string | undefined) ?? 'firebase'
+    const onChange =
+      source === 'supabase' ? sbOnAuthStateChange : fbOnAuthStateChange
+
+    const unsubscribe = onChange((firebaseUser) => {
+      const mappedUser = mapFirebaseUser(
+        firebaseUser as unknown as FirebaseUser | null
+      )
       setUser(mappedUser)
       setLoading(false)
       if (mappedUser) {
@@ -66,7 +78,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async () => {
     try {
-      await signInWithGoogle()
+      const source =
+        (import.meta.env.VITE_DATA_SOURCE as string | undefined) ?? 'firebase'
+      if (source === 'supabase') await sbSignIn()
+      else await fbSignIn()
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -75,7 +90,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await firebaseLogout()
+      const source =
+        (import.meta.env.VITE_DATA_SOURCE as string | undefined) ?? 'firebase'
+      if (source === 'supabase') await sbLogout()
+      else await fbLogout()
     } catch (error) {
       console.error('Logout error:', error)
       throw error
