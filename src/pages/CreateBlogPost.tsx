@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { BlogPost } from '../types'
-import { createBlogPost } from '../firebase/blogService'
-import { uploadImage } from '../firebase/imageService'
+import { createBlogPost } from '../services/blog-adapter'
+import { uploadImage } from '../services/image-adapter'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function CreateBlogPost() {

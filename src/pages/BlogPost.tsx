@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import type { BlogPost } from '../types'
-import { getBlogPost } from '../firebase/blogService'
+import { getBlogPost } from '../services/blog-adapter'
 
 export default function BlogPost() {
   const { id } = useParams()

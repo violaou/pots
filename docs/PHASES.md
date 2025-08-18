@@ -24,11 +24,11 @@ DDL (summary):
 - Render all related images when the detail page is visited: hero first, then by `sortOrder`
 - Route detail pages to `/gallery/:slug`
 
+### Phase 2.5 — switch to use supabase
+
+
 ### Phase 3 — Firebase Data Connect integration
-- Provision Cloud SQL for Postgres and connect via Data Connect
-- Generate client and implement production adapters inside the service
-- Add env config (e.g., `VITE_DATA_CONNECT_URL`)
-- Restrict to read-only for client; write paths added later for admin upload
+- Provision Postgres
 
 ### Phase 4 — Data migration
 - Script to import existing static artworks into Postgres
