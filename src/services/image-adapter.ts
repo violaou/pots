@@ -1,8 +1,9 @@
 import { uploadImage as fbUpload } from '../firebase/imageService'
 import { uploadImage as sbUpload } from '../supabase/storage'
+import { isSupabase } from './data-source'
 
-const source = (import.meta.env.VITE_DATA_SOURCE as string | undefined) ?? 'firebase'
+const supabaseSelected = isSupabase()
 
-export const uploadImage = source === 'supabase' ? sbUpload : fbUpload
+export const uploadImage = supabaseSelected ? sbUpload : fbUpload
 
 

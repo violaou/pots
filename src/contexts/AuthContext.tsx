@@ -6,6 +6,7 @@ import {
   useEffect
 } from 'react'
 import { User as FirebaseUser } from 'firebase/auth'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 import {
   signInWithGoogle as fbSignIn,
   logout as fbLogout,
@@ -16,6 +17,7 @@ import {
   logout as sbLogout,
   onAuthStateChange as sbOnAuthStateChange
 } from '../supabase/auth'
+import { isSupabase } from '../services/data-source'
 
 interface User {
   email: string | null
@@ -36,13 +38,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const AUTH_STORAGE_KEY = 'auth_user'
 
-const mapFirebaseUser = (firebaseUser: FirebaseUser | null): User | null => {
+function mapAuthUserFromFirebase(
+  firebaseUser: FirebaseUser | null
+): User | null {
   if (!firebaseUser) return null
   return {
     email: firebaseUser.email,
     displayName: firebaseUser.displayName,
     photoURL: firebaseUser.photoURL,
     uid: firebaseUser.uid
+  }
+}
+
+function mapAuthUserFromSupabase(
+  supabaseUser: SupabaseUser | null
+): User | null {
+  if (!supabaseUser) return null
+  const meta =
+    (supabaseUser.user_metadata as Record<string, unknown> | undefined) ?? {}
+  const fullName = meta.full_name as string | undefined
+  const avatarUrl = meta.avatar_url as string | undefined
+  return {
+    email: supabaseUser.email ?? null,
+    displayName: fullName! ?? null,
+    photoURL: avatarUrl! ?? null,
+    uid: supabaseUser.id
   }
 }
 
@@ -55,15 +75,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const source =
-      (import.meta.env.VITE_DATA_SOURCE as string | undefined) ?? 'firebase'
-    const onChange =
-      source === 'supabase' ? sbOnAuthStateChange : fbOnAuthStateChange
+    const usingSupabase = isSupabase()
+    const onChange = usingSupabase ? sbOnAuthStateChange : fbOnAuthStateChange
 
-    const unsubscribe = onChange((firebaseUser) => {
-      const mappedUser = mapFirebaseUser(
-        firebaseUser as unknown as FirebaseUser | null
-      )
+    const unsubscribe = onChange((authUser) => {
+      const mappedUser = usingSupabase
+        ? mapAuthUserFromSupabase(authUser as SupabaseUser | null)
+        : mapAuthUserFromFirebase(authUser as FirebaseUser | null)
       setUser(mappedUser)
       setLoading(false)
       if (mappedUser) {
@@ -78,9 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async () => {
     try {
-      const source =
-        (import.meta.env.VITE_DATA_SOURCE as string | undefined) ?? 'firebase'
-      if (source === 'supabase') await sbSignIn()
+      if (isSupabase()) await sbSignIn()
       else await fbSignIn()
     } catch (error) {
       console.error('Login error:', error)
@@ -90,9 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      const source =
-        (import.meta.env.VITE_DATA_SOURCE as string | undefined) ?? 'firebase'
-      if (source === 'supabase') await sbLogout()
+      if (isSupabase()) await sbLogout()
       else await fbLogout()
     } catch (error) {
       console.error('Logout error:', error)

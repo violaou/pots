@@ -1,11 +1,12 @@
 import { supabase } from './client'
+import { BLOG_POSTS_TABLE } from './constants'
 import type { BlogPost } from '../types'
 
 export async function createBlogPost(
   post: Omit<BlogPost, 'id' | 'date'> & { date: string }
 ): Promise<string> {
   const { data, error } = await supabase
-    .from('blog_posts')
+    .from(BLOG_POSTS_TABLE)
     .insert({
       title: post.title,
       content: post.content,
@@ -22,7 +23,7 @@ export async function createBlogPost(
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
   const { data, error } = await supabase
-    .from('blog_posts')
+    .from(BLOG_POSTS_TABLE)
     .select('id, title, content, author, post_date, image_url, tags')
     .order('post_date', { ascending: false })
   if (error) throw error
@@ -39,7 +40,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
   const { data, error } = await supabase
-    .from('blog_posts')
+    .from(BLOG_POSTS_TABLE)
     .select('id, title, content, author, post_date, image_url, tags')
     .eq('id', id)
     .maybeSingle()
