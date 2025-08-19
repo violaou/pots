@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { ArtworkListItem } from '../types'
+
 import { listArtworks } from '../services/artwork-service'
+import type { ArtworkListItem } from '../types'
 
 export function ArtworkGrid() {
   const [items, setItems] = useState<ArtworkListItem[]>([])

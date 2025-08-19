@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { ChangeEvent, FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { BlogPost } from '../types'
+
+import { useAuth } from '../contexts/AuthContext'
 import { createBlogPost } from '../services/blog-adapter'
 import { uploadImage } from '../services/image-adapter'
-import { useAuth } from '../contexts/AuthContext'
+import type { BlogPost } from '../types'
 
 export default function CreateBlogPost() {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export default function CreateBlogPost() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -45,18 +46,18 @@ export default function CreateBlogPost() {
   }
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTagsChange = (e: ChangeEvent<HTMLInputElement>) => {
     const tags = e.target.value.split(',').map((tag) => tag.trim())
     setFormData((prev) => ({ ...prev, tags }))
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setImageFile(file)

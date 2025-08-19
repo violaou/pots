@@ -12,7 +12,7 @@ A personal website showcasing my pottery artwork and blog posts.
 
 Install: `pnpm install`
 
-Local: `pnpm run start`
+Local: `pnpm dev`
 
 Build: `pnpm run build -- --base=/dist/`
 

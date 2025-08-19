@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Helpers to normalize snake_case payloads into our camelCase shapes
 function pick(raw: any, ...keys: string[]): unknown {
   for (const key of keys) {

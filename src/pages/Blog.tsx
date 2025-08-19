@@ -1,8 +1,9 @@
+import { ReactNode, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import type { BlogPost } from '../types'
-import { getBlogPosts } from '../services/blog-adapter'
+
 import { useAuth } from '../contexts/AuthContext'
+import { getBlogPosts } from '../services/blog-adapter'
+import type { BlogPost } from '../types'
 
 function CreatePostButton() {
   const {
@@ -53,7 +54,7 @@ function BlogHeader() {
   )
 }
 
-function BlogLayout({ children }: { children: React.ReactNode }) {
+function BlogLayout({ children }: { children: ReactNode }) {
   return (
     <div className="container mx-auto px-4 py-8">
       <BlogHeader />

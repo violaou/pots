@@ -1,6 +1,6 @@
 import { artworks as staticArtworks } from '../artworks'
-import { toSlug } from '../utils/slug'
 import type { Artwork, ArtworkImage, ArtworkListItem } from '../types'
+import { toSlug } from '../utils/slug'
 import { dc_getArtworkWithImages, dc_listArtworks } from './data-connect-adapter'
 
 function mapStaticToArtworkList(): ArtworkListItem[] {
@@ -79,7 +79,7 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
       return await dc_listArtworks(baseUrl)
     } catch (error) {
       // Fallback to static mapped data on error
-      // eslint-disable-next-line no-console
+       
       console.warn('[data-connect] listArtworks failed, falling back to static:', error)
     }
   }
@@ -93,7 +93,7 @@ export async function getArtworkWithImages(slug: string): Promise<Artwork | null
       const result = await dc_getArtworkWithImages(baseUrl, slug)
       if (result) return result
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[data-connect] getArtworkWithImages failed, falling back to static:', error)
     }
   }

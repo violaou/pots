@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js'
+
 import { supabase } from './client'
 
 export async function signInWithGoogle(): Promise<void> {
@@ -11,7 +12,8 @@ export async function logout(): Promise<void> {
   if (error) throw error
 }
 
-export function onAuthStateChange(cb: (user: User | null) => void): () => void {
+// eslint-disable-next-line no-unused-vars
+export function onAuthStateChange(cb: (_user: User | null) => void): () => void {
   const { data } = supabase.auth.onAuthStateChange((_event, session) => cb(session?.user ?? null))
   return () => data.subscription.unsubscribe()
 }

@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate,useParams } from 'react-router-dom'
+
 import { getArtworkWithImages } from '../services/artwork-service'
 import type { Artwork, ArtworkImage } from '../types'
 

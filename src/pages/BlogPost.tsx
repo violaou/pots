@@ -1,7 +1,8 @@
-import { useParams, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import type { BlogPost } from '../types'
+import { Link, useParams } from 'react-router-dom'
+
 import { getBlogPost } from '../services/blog-adapter'
+import type { BlogPost } from '../types'
 
 export default function BlogPost() {
   const { id } = useParams()

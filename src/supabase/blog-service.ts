@@ -1,6 +1,6 @@
+import type { BlogPost } from '../types'
 import { supabase } from './client'
 import { BLOG_POSTS_TABLE } from './constants'
-import type { BlogPost } from '../types'
 
 export async function createBlogPost(
   post: Omit<BlogPost, 'id' | 'date'> & { date: string }
