@@ -10,11 +10,11 @@ A personal website showcasing my pottery artwork and blog posts.
 
 ### Run
 
-Install: `npm install --legacy-peer-deps`
+Install: `pnpm install`
 
-Local: `npm run start`
+Local: `pnpm run start`
 
-Build: `npm run build --base=/dist/`
+Build: `pnpm run build -- --base=/dist/`
 
 Deploy: `firebase deploy --only hosting`
 
