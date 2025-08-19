@@ -10,13 +10,11 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview",
-    "publish": "npm run build && firebase deploy --only hosting"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fillout/react": "^1.1.2",
     "@supabase/supabase-js": "^2.55.0",
-    "firebase": "^11.6.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

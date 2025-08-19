@@ -5,19 +5,13 @@ import {
   ReactNode,
   useEffect
 } from 'react'
-import { User as FirebaseUser } from 'firebase/auth'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
-import {
-  signInWithGoogle as fbSignIn,
-  logout as fbLogout,
-  onAuthStateChange as fbOnAuthStateChange
-} from '../firebase/authService'
 import {
   signInWithGoogle as sbSignIn,
   logout as sbLogout,
-  onAuthStateChange as sbOnAuthStateChange
+  onAuthStateChange as sbOnAuthStateChange,
+  isAdmin as sbIsAdmin
 } from '../supabase/auth'
-import { isSupabase } from '../services/data-source'
 
 interface User {
   email: string | null
@@ -29,6 +23,8 @@ interface User {
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
+  isAdmin: boolean
+  adminLoading: boolean
   login: () => Promise<void>
   logout: () => Promise<void>
   loading: boolean
@@ -37,18 +33,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const AUTH_STORAGE_KEY = 'auth_user'
-
-function mapAuthUserFromFirebase(
-  firebaseUser: FirebaseUser | null
-): User | null {
-  if (!firebaseUser) return null
-  return {
-    email: firebaseUser.email,
-    displayName: firebaseUser.displayName,
-    photoURL: firebaseUser.photoURL,
-    uid: firebaseUser.uid
-  }
-}
 
 function mapAuthUserFromSupabase(
   supabaseUser: SupabaseUser | null
@@ -73,22 +57,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return storedUser ? JSON.parse(storedUser) : null
   })
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminLoading, setAdminLoading] = useState(false)
 
   useEffect(() => {
-    const usingSupabase = isSupabase()
-    const onChange = usingSupabase ? sbOnAuthStateChange : fbOnAuthStateChange
-
-    const unsubscribe = onChange((authUser) => {
-      const mappedUser = usingSupabase
-        ? mapAuthUserFromSupabase(authUser as SupabaseUser | null)
-        : mapAuthUserFromFirebase(authUser as FirebaseUser | null)
+    const unsubscribe = sbOnAuthStateChange((authUser) => {
+      const mappedUser = mapAuthUserFromSupabase(
+        authUser as SupabaseUser | null
+      )
       setUser(mappedUser)
-      setLoading(false)
       if (mappedUser) {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mappedUser))
       } else {
         localStorage.removeItem(AUTH_STORAGE_KEY)
       }
+
+      // Compute admin membership using Supabase
+      if (mappedUser) {
+        setAdminLoading(true)
+        sbIsAdmin(mappedUser.uid)
+          .then((member) => setIsAdmin(!!member))
+          .catch((err) => {
+            console.error('Failed to determine admin membership', err)
+            setIsAdmin(false)
+          })
+          .finally(() => setAdminLoading(false))
+      } else {
+        setIsAdmin(false)
+        setAdminLoading(false)
+      }
+
+      setLoading(false)
     })
 
     return () => unsubscribe()
@@ -96,8 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async () => {
     try {
-      if (isSupabase()) await sbSignIn()
-      else await fbSignIn()
+      await sbSignIn()
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -106,8 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      if (isSupabase()) await sbLogout()
-      else await fbLogout()
+      await sbLogout()
     } catch (error) {
       console.error('Logout error:', error)
       throw error
@@ -119,6 +116,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         isAuthenticated: !!user,
+        isAdmin,
+        adminLoading,
         login,
         logout,
         loading
