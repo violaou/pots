@@ -5,7 +5,12 @@ import { getBlogPosts } from '../services/blog-adapter'
 import { useAuth } from '../contexts/AuthContext'
 
 function CreatePostButton() {
-  const { isAuthenticated, loading: authLoading } = useAuth()
+  const {
+    isAuthenticated,
+    isAdmin,
+    adminLoading,
+    loading: authLoading
+  } = useAuth()
 
   if (authLoading) {
     return (
@@ -13,7 +18,7 @@ function CreatePostButton() {
     )
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || adminLoading || !isAdmin) {
     return null
   }
 

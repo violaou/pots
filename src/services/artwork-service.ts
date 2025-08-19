@@ -65,7 +65,7 @@ function mapStaticToArtwork(slug: string): Artwork | null {
     clay: undefined,
     cone: undefined,
     isMicrowaveSafe: false,
-    isDishwasherSafe: false,
+    altText: found.altText,
     createdAt,
     updatedAt: createdAt,
     images,

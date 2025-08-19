@@ -28,7 +28,7 @@ const ArtworkSchema = z.object({
   clay: z.string().optional(),
   cone: z.number().optional(),
   isMicrowaveSafe: z.boolean(),
-  isDishwasherSafe: z.boolean(),
+  altText: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   images: z.array(ArtworkImageSchema)
@@ -70,12 +70,7 @@ function normalizeArtwork(raw: any): Artwork {
       'isMicrowaveSafe',
       'is_microwave_safe'
     ),
-    isDishwasherSafe: pickBoolean(
-      raw,
-      false,
-      'isDishwasherSafe',
-      'is_dishwasher_safe'
-    ),
+    altText: pickString(raw, 'altText'),
     createdAt: pickDateString(raw, 'createdAt', 'created_at'),
     updatedAt: pickDateString(raw, 'updatedAt', 'updated_at'),
     images: imagesRaw.map(normalizeImage)

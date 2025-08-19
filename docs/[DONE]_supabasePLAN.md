@@ -23,7 +23,7 @@ Switch the app from Firebase (Auth, Firestore, Storage) to Supabase (Auth, Postg
 ### Database setup (Postgres) — step-by-step
 1. In the Supabase Dashboard, open SQL Editor.
 2. Run the consolidated SQL below to create tables, triggers, and RLS policies.
-3. Authenticate once with Google (via your site or the Supabase Auth UI) using `ouviola77@gmail.com` so the user exists in `auth.users`.
+3. Authenticate once with Google (via your site or the Supabase Auth UI) using `{MY_EMAIL_HERE}@gmail.com` so the user exists in `auth.users`.
 4. Insert the admin into `public.blog_admins` by email (query included below).
 5. Optional: run the verification snippets to confirm reads are public and writes require admin.
 
@@ -96,7 +96,7 @@ using (exists (select 1 from public.blog_admins a where a.user_id = auth.uid()))
 Add the admin (after first Google sign-in):
 ```sql
 insert into public.blog_admins (user_id)
-select id from auth.users where email = 'ouviola77@gmail.com'
+select id from auth.users where email = '{MY_EMAIL_HERE}@gmail.com'
 on conflict (user_id) do nothing;
 ```
 
@@ -259,10 +259,10 @@ create policy "Admins can delete blog images" on storage.objects
 - Add Redirect URLs: `http://localhost:5173`, production domain, and Vercel preview domain(s) once available (e.g. `https://pots-<hash>-violaou.vercel.app`).
 - Follow the official Supabase guide for migrating from Firebase Auth: [Supabase “Migrate from Firebase Auth to Supabase”](https://supabase.com/docs/guides/platform/migrating-to-supabase/firebase-auth).
 - We only use Google OAuth (no password migration required). Ensure Google provider is configured; users will authenticate via Supabase.
-- Admin assignment (single admin): insert the admin by email using a server-side query that resolves the `auth.users.id` for `ouviola77@gmail.com`:
+- Admin assignment (single admin): insert the admin by email using a server-side query that resolves the `auth.users.id` for `{MY_EMAIL_HERE}@gmail.com`:
 ```sql
 insert into public.blog_admins (user_id)
-select id from auth.users where email = 'ouviola77@gmail.com'
+select id from auth.users where email = '{MY_EMAIL_HERE}@gmail.com'
 on conflict (user_id) do nothing;
 ```
 
@@ -471,7 +471,7 @@ export const uploadImage = source === 'supabase' ? sbUpload : fbUpload
 - [ ] Dependency installed: `@supabase/supabase-js`.
 - [ ] Env vars added locally and in prod: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_DATA_SOURCE`.
 - [ ] Schema + RLS + storage bucket created.
-- [ ] Single admin user inserted into `public.blog_admins` (by email `ouviola77@gmail.com`).
+- [ ] Single admin user inserted into `public.blog_admins` (by email `{MY_EMAIL_HERE}@gmail.com`).
 - [ ] App builds locally with `VITE_DATA_SOURCE=supabase` and all flows pass.
 - [ ] Vercel project configured; preview deploy verified (SPA routes, env vars, auth).
 - [ ] Domain DNS switched to Vercel when ready.

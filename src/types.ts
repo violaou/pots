@@ -7,6 +7,7 @@ export interface ArtworkItem {
   medium: string;
   dimensions: string;
   price?: string;
+  altText?: string;
 }
 
 export interface NavItem {
@@ -43,8 +44,8 @@ export interface Artwork {
   materials?: string
   clay?: string
   cone?: number
+  altText?: string
   isMicrowaveSafe: boolean
-  isDishwasherSafe: boolean
   createdAt: string
   updatedAt: string
   images: ArtworkImage[]

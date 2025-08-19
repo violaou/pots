@@ -48,7 +48,7 @@ function App() {
               <Route
                 path="/blog/create"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute adminOnly>
                     <CreateBlogPost />
                   </ProtectedRoute>
                 }

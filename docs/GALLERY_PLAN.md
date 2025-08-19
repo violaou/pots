@@ -1,12 +1,12 @@
 ## Project Plan: Artwork Data Restructure and Display
 
-A staged plan to migrate artworks to a relational model with related images, integrate PostgreSQL via Firebase Data Connect, and update the UI.
+A staged plan to migrate artworks to a relational model with related images, integrate PostgreSQL via Supabase Data Connect, and update the UI.
 
-### Phase 0 — Database design and Data Connect plan
+### Phase 0 — Supabase Postgres Database design
 - Define Postgres schema with `artworks` and `artwork_images` (1:N)
 - Enforce a single hero image per artwork using a partial unique index on `artwork_id` where `is_hero = true`
 - Adopt `slug` as the canonical route key (`/gallery/:slug`), unique per artwork
-- Prepare Data Connect configuration to introspect the schema and generate a client
+- create schema and generate a client if needed
 
 DDL (summary):
 - `artworks`: id (uuid), slug (unique), title, description, materials, clay, cone, is_microwave_safe, is_dishwasher_safe, created_at, updated_at
@@ -23,28 +23,34 @@ DDL (summary):
 - `ArtworkDetail` fetches by slug with `getArtworkWithImages(slug)`
 - Render all related images when the detail page is visited: hero first, then by `sortOrder`
 - Route detail pages to `/gallery/:slug`
+- make it so test images can be accessed via a test_images folder available locally in the root directory of the project
+- use test images first if dev environment is set to local
 
-### Phase 2.5 — switch to use supabase
 
-
-### Phase 3 — Firebase Data Connect integration
-- Provision Postgres
-
-### Phase 4 — Data migration
-- Script to import existing static artworks into Postgres
-- Upload images to Firebase Storage if needed and persist Storage URLs
-- Validate hero image constraints and sort orders
-
-### Phase 5 — Upload form (admin)
+### Phase 3 — Upload form (admin)
 - Admin-only upload with Zod validation
-- Upload images to Storage, then write rows to DB via Data Connect
-- Support marking one image as hero and ordering the rest
+- Upload images to Supabase Postgres Storage if needed and persist Storage URLs
+  - probably need to create a new page in the admin gated part of this website to do this
+  - page should have a clean, react form with
+    - REQUIRED:title
+    - OPTIONAL:description
+    - OPTIONAL:materials
+    - OPTIONAL:clay
+    - OPTIONAL:cone
+    - OPTIONAL:isMicrowaveSafe
+    - OPTIONAL:alt_text
+    - REQUIRED: hero image (upload) - uploaded image should have isHero set to true
+    - OPTIONAL: related images (upload), should support more than one file upload
+  - page form onsubmit should validate the form and if valid, submit the form to the backend
+
+
+### Phase 4 — Data validation
 
 ## API Contracts (stable for UI)
 
 Interfaces (summary):
 - `ArtworkImage`: id, artworkId, imageUrl, alt?, sortOrder, isHero, createdAt
-- `Artwork`: id, slug, title, description?, materials?, clay?, cone?, isMicrowaveSafe, isDishwasherSafe, createdAt, updatedAt, images: ArtworkImage[]
+- `Artwork`: id, slug, title, description?, materials?, clay?, cone?, isMicrowaveSafe, alt_text, createdAt, updatedAt, images: ArtworkImage[]
 - `ArtworkListItem`: id, slug, title, heroImageUrl
 
 Service functions:

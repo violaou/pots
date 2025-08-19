@@ -257,7 +257,6 @@ npm run lint         # Run ESLint
 - concise and terse
 - Include the materials and clay as being fired to cone 6
 - Include if the piece is microwavable
-- Include the piece is dishwasher safe
 - Made in Toronto, Canada
 
 ### Blog Content
