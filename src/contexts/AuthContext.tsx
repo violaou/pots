@@ -1,17 +1,16 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect
-} from 'react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import {
-  signInWithGoogle as sbSignIn,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState} from 'react'
+
+import {
+  isAdmin as sbIsAdmin,
   logout as sbLogout,
   onAuthStateChange as sbOnAuthStateChange,
-  isAdmin as sbIsAdmin
-} from '../supabase/auth'
+  signInWithGoogle as sbSignIn} from '../supabase/auth'
 
 interface User {
   email: string | null

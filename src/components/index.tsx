@@ -1,5 +1,5 @@
-export { ArtworkGrid } from './ArtworkGrid'
 export { ArtworkDetail } from './ArtworkDetail'
-export { UnderConstruction } from './UnderConstruction'
-export { TopBar } from './TopBar'
+export { ArtworkGrid } from './ArtworkGrid'
 export { Sidebar } from './Sidebar'
+export { TopBar } from './TopBar'
+export { UnderConstruction } from './UnderConstruction'

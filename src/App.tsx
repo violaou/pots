@@ -1,20 +1,20 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import {
-  ArtworkGrid,
-  ArtworkDetail,
-  UnderConstruction,
-  TopBar,
-  Sidebar
-} from './components'
 import { useEffect } from 'react'
-import { Contact } from './pages/Contact'
+import { BrowserRouter as Router, Route,Routes } from 'react-router-dom'
+
+import {
+  ArtworkDetail,
+  ArtworkGrid,
+  Sidebar,
+  TopBar,
+  UnderConstruction} from './components'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { AuthProvider } from './contexts/AuthContext'
 import About from './pages/About'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import { Contact } from './pages/Contact'
 import CreateBlogPost from './pages/CreateBlogPost'
 import { Login } from './pages/Login'
-import { AuthProvider } from './contexts/AuthContext'
-import { ProtectedRoute } from './components/ProtectedRoute'
 
 const isDev = import.meta.env.DEV
 

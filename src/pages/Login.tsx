@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+
 import { useAuth } from '../contexts/AuthContext'
 
 export const Login = () => {
   const [error, setError] = useState('')
   const navigate = useNavigate()
-  const location = useLocation()
   const { login } = useAuth()
-
-  const from = location.state?.from?.pathname || '/'
 
   const handleGoogleLogin = async () => {
     try {

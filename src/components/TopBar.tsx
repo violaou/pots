@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { LogOut,Menu, X } from 'lucide-react'
+import React, { useEffect,useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, LogOut } from 'lucide-react'
+
 import violaPotsLogo from '../assets/viola-pots.png'
-import { NavItem } from '../types'
 import { useAuth } from '../contexts/AuthContext'
+import { NavItem } from '../types'
 
 export const getNavItems = (isAuthenticated: boolean): NavItem[] => {
   const items: NavItem[] = [

@@ -1,3 +1,3 @@
-export { createBlogPost, getBlogPosts, getBlogPost } from '../supabase/blog-service'
+export { createBlogPost, getBlogPost,getBlogPosts } from '../supabase/blog-service'
 
 

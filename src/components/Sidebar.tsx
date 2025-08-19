@@ -1,8 +1,9 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import violaPotsLogo from '../assets/viola-pots.png'
-import { getNavItems } from './TopBar'
-import { useAuth } from '../contexts/AuthContext'
 import { LogOut } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+
+import violaPotsLogo from '../assets/viola-pots.png'
+import { useAuth } from '../contexts/AuthContext'
+import { getNavItems } from './TopBar'
 
 export const Sidebar = () => {
   const location = useLocation()

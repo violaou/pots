@@ -1,10 +1,11 @@
 import { z } from 'zod'
+
 import type { Artwork, ArtworkImage, ArtworkListItem } from '../types'
 import {
-  pickString,
-  pickNumber,
   pickBoolean,
   pickDateString,
+  pickNumber,
+  pickString,
   withTrailingSlash
 } from './utils'
 
@@ -109,7 +110,7 @@ async function getJson(url: string, init?: RequestInit): Promise<any> {
   return res.json()
 }
 
-export async function dc_listArtworks(
+export async function sb_listArtworks(
   baseUrl: string
 ): Promise<ArtworkListItem[]> {
   const payload = await getJson(withTrailingSlash(baseUrl) + 'artworks')
@@ -117,7 +118,7 @@ export async function dc_listArtworks(
   return payload.map(normalizeListItem)
 }
 
-export async function dc_getArtworkWithImages(
+export async function sb_getArtworkWithImages(
   baseUrl: string,
   slug: string
 ): Promise<Artwork | null> {
