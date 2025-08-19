@@ -1,7 +1,7 @@
 import { artworks as staticArtworks } from '../artworks'
 import type { Artwork, ArtworkImage, ArtworkListItem } from '../types'
 import { toSlug } from '../utils/slug'
-import { dc_getArtworkWithImages, dc_listArtworks } from './data-connect-adapter'
+import { sb_getArtworkWithImages, sb_listArtworks } from './data-connect-adapter'
 
 function mapStaticToArtworkList(): ArtworkListItem[] {
   return staticArtworks.map((a) => ({
@@ -76,10 +76,10 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
   if (baseUrl) {
     try {
-      return await dc_listArtworks(baseUrl)
+      return await sb_listArtworks(baseUrl)
     } catch (error) {
       // Fallback to static mapped data on error
-       
+
       console.warn('[data-connect] listArtworks failed, falling back to static:', error)
     }
   }
@@ -90,10 +90,10 @@ export async function getArtworkWithImages(slug: string): Promise<Artwork | null
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
   if (baseUrl) {
     try {
-      const result = await dc_getArtworkWithImages(baseUrl, slug)
+      const result = await sb_getArtworkWithImages(baseUrl, slug)
       if (result) return result
     } catch (error) {
-       
+
       console.warn('[data-connect] getArtworkWithImages failed, falling back to static:', error)
     }
   }
