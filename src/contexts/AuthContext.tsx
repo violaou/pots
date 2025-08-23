@@ -4,13 +4,18 @@ import {
   ReactNode,
   useContext,
   useEffect,
-  useState} from 'react'
+  useState
+} from 'react'
 
 import {
   isAdmin as sbIsAdmin,
   logout as sbLogout,
   onAuthStateChange as sbOnAuthStateChange,
-  signInWithGoogle as sbSignIn} from '../supabase/auth'
+  getCurrentAuthUser as sbGetCurrentAuthUser,
+  sendMagicLink as sbSendMagicLink,
+  signInWithPassword as sbSignInWithPassword,
+  signUpWithEmail as sbSignUpWithEmail
+} from '../supabase/auth'
 
 interface User {
   email: string | null
@@ -24,7 +29,9 @@ interface AuthContextType {
   isAuthenticated: boolean
   isAdmin: boolean
   adminLoading: boolean
-  login: () => Promise<void>
+  sendMagicLink: (email: string) => Promise<void>
+  signInWithPassword: (email: string, password: string) => Promise<void>
+  signUpWithEmail: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   loading: boolean
 }
@@ -32,6 +39,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const AUTH_STORAGE_KEY = 'auth_user'
+
+const isDevLoggedIn =
+  import.meta.env.DEV && import.meta.env.VITE_LOGGED_IN === 'true'
+
+const DEV_USER: User = {
+  email: 'dev@example.com',
+  displayName: 'Dev Admin',
+  photoURL: null,
+  uid: 'dev-admin'
+}
 
 function mapAuthUserFromSupabase(
   supabaseUser: SupabaseUser | null
@@ -51,15 +68,43 @@ function mapAuthUserFromSupabase(
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
-    // Initialize from localStorage if available
+    if (isDevLoggedIn) return DEV_USER
     const storedUser = localStorage.getItem(AUTH_STORAGE_KEY)
     return storedUser ? JSON.parse(storedUser) : null
   })
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [adminLoading, setAdminLoading] = useState(false)
+  const [isAdmin, setIsAdmin] = useState<boolean>(isDevLoggedIn)
+  const [adminLoading, setAdminLoading] = useState<boolean>(false)
 
   useEffect(() => {
+    if (isDevLoggedIn) {
+      setLoading(false)
+      setAdminLoading(false)
+      return
+    }
+
+    // Initialize from current session to avoid redirect race conditions
+    ;(async () => {
+      const current = await sbGetCurrentAuthUser()
+      const mappedUser = mapAuthUserFromSupabase(current as SupabaseUser | null)
+      setUser(mappedUser)
+      if (mappedUser) {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mappedUser))
+        setAdminLoading(true)
+        sbIsAdmin(mappedUser.uid)
+          .then((member) => setIsAdmin(!!member))
+          .catch((err) => {
+            console.error('Failed to determine admin membership', err)
+            setIsAdmin(false)
+          })
+          .finally(() => setAdminLoading(false))
+      } else {
+        setIsAdmin(false)
+        setAdminLoading(false)
+      }
+      setLoading(false)
+    })()
+
     const unsubscribe = sbOnAuthStateChange((authUser) => {
       const mappedUser = mapAuthUserFromSupabase(
         authUser as SupabaseUser | null
@@ -92,16 +137,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe()
   }, [])
 
-  const login = async () => {
-    try {
-      await sbSignIn()
-    } catch (error) {
-      console.error('Login error:', error)
-      throw error
-    }
+  const sendMagicLink = async (email: string) => {
+    if (isDevLoggedIn) return
+    await sbSendMagicLink(email)
+  }
+
+  const signInWithPassword = async (email: string, password: string) => {
+    if (isDevLoggedIn) return
+    await sbSignInWithPassword(email, password)
+  }
+
+  const signUpWithEmail = async (email: string, password: string) => {
+    if (isDevLoggedIn) return
+    await sbSignUpWithEmail(email, password)
   }
 
   const logout = async () => {
+    if (isDevLoggedIn) return
     try {
       await sbLogout()
     } catch (error) {
@@ -117,7 +169,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated: !!user,
         isAdmin,
         adminLoading,
-        login,
+        sendMagicLink,
+        signInWithPassword,
+        signUpWithEmail,
         logout,
         loading
       }}

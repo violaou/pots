@@ -14,4 +14,23 @@ export async function uploadImage(file: File): Promise<string> {
   return data.publicUrl
 }
 
+export function getStoragePathFromPublicUrl(publicUrl: string): string | null {
+  try {
+    const url = new URL(publicUrl)
+    const marker = `/object/public/${BLOG_IMAGES_BUCKET}/`
+    const idx = url.pathname.indexOf(marker)
+    if (idx === -1) return null
+    const objectPath = url.pathname.substring(idx + marker.length)
+    return decodeURIComponent(objectPath)
+  } catch {
+    return null
+  }
+}
+
+export async function deleteImageByPublicUrl(publicUrl: string): Promise<void> {
+  const objectPath = getStoragePathFromPublicUrl(publicUrl)
+  if (!objectPath) return
+  const { error } = await supabase.storage.from(BLOG_IMAGES_BUCKET).remove([objectPath])
+  if (error) throw error
+}
 

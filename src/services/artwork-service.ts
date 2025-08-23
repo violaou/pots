@@ -1,7 +1,16 @@
 import { artworks as staticArtworks } from '../artworks'
 import type { Artwork, ArtworkImage, ArtworkListItem } from '../types'
 import { toSlug } from '../utils/slug'
-import { sb_getArtworkWithImages, sb_listArtworks } from './data-connect-adapter'
+import {
+  type ArtworkUpdateInput,
+  sb_deleteArtwork,
+  sb_getArtworkWithImages,
+  sb_listArtworks,
+  sb_updateArtwork} from './data-connect-adapter'
+
+// Simple in-memory caches for optimistic UI
+let artworkListCache: ArtworkListItem[] | null = null
+const artworkDetailCache = new Map<string, Artwork>()
 
 function mapStaticToArtworkList(): ArtworkListItem[] {
   return staticArtworks.map((a) => ({
@@ -73,31 +82,140 @@ function mapStaticToArtwork(slug: string): Artwork | null {
 }
 
 export async function listArtworks(): Promise<ArtworkListItem[]> {
+  if (artworkListCache) return artworkListCache
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
   if (baseUrl) {
     try {
-      return await sb_listArtworks(baseUrl)
+      const list = await sb_listArtworks(baseUrl)
+      artworkListCache = list
+      return list
     } catch (error) {
       // Fallback to static mapped data on error
-
       console.warn('[data-connect] listArtworks failed, falling back to static:', error)
     }
   }
-  return mapStaticToArtworkList()
+  const list = mapStaticToArtworkList()
+  artworkListCache = list
+  return list
 }
 
 export async function getArtworkWithImages(slug: string): Promise<Artwork | null> {
+  const cached = artworkDetailCache.get(slug)
+  if (cached) return cached
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
   if (baseUrl) {
     try {
       const result = await sb_getArtworkWithImages(baseUrl, slug)
-      if (result) return result
+      if (result) {
+        artworkDetailCache.set(slug, result)
+        return result
+      }
     } catch (error) {
-
       console.warn('[data-connect] getArtworkWithImages failed, falling back to static:', error)
     }
   }
-  return mapStaticToArtwork(slug)
+  const fallback = mapStaticToArtwork(slug)
+  if (fallback) artworkDetailCache.set(slug, fallback)
+  return fallback
+}
+
+export async function updateArtwork(
+  slug: string,
+  updates: ArtworkUpdateInput
+): Promise<Artwork> {
+  const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
+  if (!baseUrl) throw new Error('Updating artworks requires Data Connect backend')
+  // Snapshot for rollback
+  const prevDetail = artworkDetailCache.get(slug)
+  const prevList = artworkListCache ? [...artworkListCache] : null
+
+  // Optimistically update detail cache
+  if (prevDetail) {
+    const optimistic: Artwork = {
+      ...prevDetail,
+      title: updates.title ?? prevDetail.title,
+      description: updates.description ?? prevDetail.description,
+      clay: updates.clay ?? prevDetail.clay,
+      cone: normalizeCone(updates.cone, prevDetail.cone),
+      isMicrowaveSafe:
+        typeof updates.isMicrowaveSafe === 'boolean'
+          ? updates.isMicrowaveSafe
+          : prevDetail.isMicrowaveSafe,
+      updatedAt: new Date().toISOString()
+    }
+    artworkDetailCache.set(slug, optimistic)
+
+    // Update title in list cache if present
+    if (artworkListCache) {
+      artworkListCache = artworkListCache.map((item) =>
+        item.id === optimistic.id
+          ? { ...item, title: optimistic.title }
+          : item
+      )
+    }
+  }
+
+  try {
+    const saved = await sb_updateArtwork(baseUrl, slug, updates)
+
+    // If slug changed on the server, move cache entry
+    if (saved.slug !== slug) {
+      artworkDetailCache.delete(slug)
+    }
+    artworkDetailCache.set(saved.slug, saved)
+
+    // Sync list cache with returned title/slug
+    if (artworkListCache) {
+      artworkListCache = artworkListCache.map((item) => {
+        if (item.id !== saved.id) return item
+        return { ...item, title: saved.title, slug: saved.slug }
+      })
+    }
+
+    return saved
+  } catch (error) {
+    // Rollback on failure
+    if (prevDetail) artworkDetailCache.set(slug, prevDetail)
+    if (prevList) artworkListCache = prevList
+    throw error
+  }
+}
+
+export async function deleteArtwork(slug: string): Promise<void> {
+  const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
+  if (!baseUrl) throw new Error('Deleting artworks requires Data Connect backend')
+  // Snapshot caches
+  const prevList = artworkListCache ? [...artworkListCache] : null
+  const prevDetail = artworkDetailCache.get(slug)
+
+  // Optimistic removal
+  if (artworkListCache) {
+    artworkListCache = artworkListCache.filter((item) => item.slug !== slug)
+  }
+  artworkDetailCache.delete(slug)
+
+  try {
+    await sb_deleteArtwork(baseUrl, slug)
+  } catch (error) {
+    // Rollback
+    if (prevList) artworkListCache = prevList
+    if (prevDetail) artworkDetailCache.set(slug, prevDetail)
+    throw error
+  }
+}
+
+function normalizeCone(
+  next: string | number | undefined,
+  fallback: number | undefined
+): number | undefined {
+  if (typeof next === 'number') return next
+  if (typeof next === 'string') {
+    // Try to parse trailing number, e.g., "cone 6" -> 6
+    const match = next.match(/(-?\d+(?:\.\d+)?)/)
+    const parsed = match ? Number(match[1]) : Number(next)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+  return fallback
 }
 
 

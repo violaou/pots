@@ -1,14 +1,19 @@
 import { ArrowLeft } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate,useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { getArtworkWithImages } from '../services/artwork-service'
+import {
+  deleteArtwork,
+  getArtworkWithImages
+} from '../services/artwork-service'
 import type { Artwork, ArtworkImage } from '../types'
+import { useAuth } from '../contexts/AuthContext'
 
 export const ArtworkDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [artwork, setArtwork] = useState<Artwork | null>(null)
+  const { isAdmin } = useAuth()
 
   useEffect(() => {
     if (!slug) return
@@ -48,6 +53,35 @@ export const ArtworkDetail: React.FC = () => {
             <h1 className="text-2xl font-medium text-gray-900">
               {artwork.title}
             </h1>
+            {/* {isAdmin ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  to={`/gallery/${artwork.slug}/edit`}
+                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={async () => {
+                    if (!slug) return
+                    const ok = window.confirm(
+                      'Delete this artwork? This cannot be undone.'
+                    )
+                    if (!ok) return
+                    try {
+                      await deleteArtwork(slug)
+                      navigate('/gallery')
+                    } catch (err) {
+                      console.error('Delete failed', err)
+                      alert('Failed to delete artwork')
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null} */}
             {artwork.description ? (
               <p className="text-gray-600">{artwork.description}</p>
             ) : null}

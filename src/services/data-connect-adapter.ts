@@ -110,6 +110,33 @@ async function getJson(url: string, init?: RequestInit): Promise<any> {
   return res.json()
 }
 
+async function sendJson(
+  url: string,
+  method: 'PATCH' | 'PUT' | 'POST' | 'DELETE',
+  body?: unknown,
+  headers?: Record<string, string>
+): Promise<any> {
+  const res = await fetch(url, {
+    method,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(headers ?? {})
+    },
+    body: body == null ? undefined : JSON.stringify(body)
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(
+      `Data Connect request failed: ${res.status} ${res.statusText} ${text}`
+    )
+  }
+  // Some DELETE endpoints return no content
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) return null
+  return res.json()
+}
+
 export async function sb_listArtworks(
   baseUrl: string
 ): Promise<ArtworkListItem[]> {
@@ -128,4 +155,41 @@ export async function sb_getArtworkWithImages(
   )
   if (!payload) return null
   return normalizeArtwork(payload)
+}
+
+export interface ArtworkUpdateInput {
+  title?: string
+  description?: string
+  clay?: string
+  cone?: string | number
+  isMicrowaveSafe?: boolean
+  isPublished?: boolean
+}
+
+export async function sb_updateArtwork(
+  baseUrl: string,
+  slug: string,
+  updates: ArtworkUpdateInput
+): Promise<Artwork> {
+  if (!slug) throw new Error('slug is required')
+  if (!updates || typeof updates !== 'object') {
+    throw new Error('updates payload is required')
+  }
+  const payload = await sendJson(
+    withTrailingSlash(baseUrl) + `artworks/${encodeURIComponent(slug)}`,
+    'PATCH',
+    updates
+  )
+  return normalizeArtwork(payload)
+}
+
+export async function sb_deleteArtwork(
+  baseUrl: string,
+  slug: string
+): Promise<void> {
+  if (!slug) throw new Error('slug is required')
+  await sendJson(
+    withTrailingSlash(baseUrl) + `artworks/${encodeURIComponent(slug)}`,
+    'DELETE'
+  )
 }

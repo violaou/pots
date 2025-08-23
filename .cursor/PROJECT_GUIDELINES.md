@@ -1,14 +1,14 @@
 # Viola Pots - Project Guidelines
 
-A React + TypeScript pottery portfolio application with Firebase backend.
+A React + TypeScript pottery portfolio application with Vercel and Supabase backend.
 
 ## 🏗️ Architecture Overview
 
 This is a client-side React application built with:
 - **Frontend**: React + TypeScript + Vite
 - **Styling**: Tailwind CSS
-- **Backend**: Firebase (Auth, Firestore, Storage)
-- **Deployment**: Firebase Hosting
+- **Backend**: Vercel and Supabase
+- **Deployment**: Vercel
 
 ---
 
@@ -20,7 +20,6 @@ src/
 ├── components/          # Reusable UI components
 ├── pages/              # Route-level components
 ├── contexts/           # React contexts (auth, theme, etc.)
-├── firebase/           # Firebase service modules
 ├── services/           # External service integrations
 ├── utils/              # Pure utility functions
 ├── assets/             # Static assets (images, fonts)
@@ -78,7 +77,7 @@ export { ArtworkGrid }
 - Use `interface` over `type` for object shapes
 - Avoid `enum`, use const maps instead
 - Define props interfaces in the same file as components
-- Use strict type checking for Firebase data
+- Use strict type checking for Supabase data
 
 ### Error Handling Pattern
 ```typescript
@@ -102,13 +101,13 @@ async function createBlogPost(data: BlogPostData) {
 
 ---
 
-## 🔥 Firebase Integration
+## 🔥 Supabase Integration
 
 ### Service Organization
 - **authService.ts**: Authentication operations
 - **blogService.ts**: Blog CRUD operations
 - **imageService.ts**: Image upload/management
-- **config.ts**: Firebase configuration
+- **config.ts**: Supabase configuration
 
 ### Data Fetching Pattern
 ```typescript
@@ -162,12 +161,12 @@ const styles = {
 ### Authentication
 - Protect admin routes with `ProtectedRoute` component
 - Validate user permissions on both client and server
-- Use Firebase Auth security rules
+- Use Supabase Auth security rules
 
 ### Image Handling
 - Optimize images before upload (WebP format preferred)
 - Implement progressive loading for artwork gallery
-- Use Firebase Storage security rules
+- Use Supabase Storage security rules
 
 ### Performance
 - Lazy load components with `React.lazy()`
@@ -211,7 +210,7 @@ const styles = {
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
 VITE_FIREBASE_PROJECT_ID=
-# ... other Firebase config
+# ... other Supabase config
 ```
 
 ### Build Process
@@ -223,7 +222,7 @@ VITE_FIREBASE_PROJECT_ID=
 - [ ] Run linting and type checking
 - [ ] Test critical user flows
 - [ ] Verify environment variables
-- [ ] Check Firebase security rules
+- [ ] Check Supabase security rules
 - [ ] Test on multiple devices/browsers
 
 ---
@@ -265,7 +264,7 @@ npm run lint         # Run ESLint
 - Artist journey and inspiration stories
 
 ### SEO Considerations
-- Descriptive alt text for all artwork images
+- Descriptive alt text for all artwork images (if not provided, use the title)
 - Structured data for artwork and blog posts
 - Clean URLs and meta descriptions
 
@@ -285,10 +284,11 @@ npm run lint         # Run ESLint
 ## 📚 Resources
 
 - [React TypeScript Patterns](https://react-typescript-cheatsheet.netlify.app/)
-- [Firebase Web Documentation](https://firebase.google.com/docs/web)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Vercel Documentation](https://vercel.com/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [Accessibility Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
 
 ---
 
-*Last updated: January 2024*
+*Last updated: August 2025*

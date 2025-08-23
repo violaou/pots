@@ -19,7 +19,7 @@ This is a React-based web application that serves as both an artist portfolio an
 ### Authentication
 - User login functionality
 - Protected routes for authenticated content
-- Firebase-based authentication system
+- Supabase authentication with Google provider.
 
 ### Layout & Navigation
 - TopBar for main navigation
@@ -30,7 +30,9 @@ This is a React-based web application that serves as both an artist portfolio an
 ## Technical Stack
 - React with TypeScript
 - React Router for navigation
-- Firebase for authentication and backend
+- Supabase for authentication
+- Supabase Postgres for database.
+- Vercel for backend
 - Vite as the build tool
 - CSS for styling (likely with Tailwind CSS based on class names)
 
@@ -39,14 +41,13 @@ This is a React-based web application that serves as both an artist portfolio an
 - Protected routes are implemented for authenticated features
 - Component-based architecture with clear separation of concerns
 - Type definitions are centralized in types.ts
-- Firebase integration for backend services
+- Vercel and Supabase for backend services
 
 ## Project Structure
 - `/src/components` - Reusable UI components
 - `/src/pages` - Main page components
 - `/src/contexts` - React context providers
 - `/src/assets` - Static assets and data
-- `/src/firebase` - Firebase configuration and services
 - `/src/types.ts` - Global TypeScript definitions
 
 ## Best Practices
