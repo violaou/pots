@@ -8,10 +8,10 @@ import {
 } from 'react'
 
 import {
+  getCurrentAuthUser as sbGetCurrentAuthUser,
   isAdmin as sbIsAdmin,
   logout as sbLogout,
   onAuthStateChange as sbOnAuthStateChange,
-  getCurrentAuthUser as sbGetCurrentAuthUser,
   sendMagicLink as sbSendMagicLink,
   signInWithPassword as sbSignInWithPassword,
   signUpWithEmail as sbSignUpWithEmail

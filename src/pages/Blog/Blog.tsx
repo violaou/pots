@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { useAuth } from '../contexts/AuthContext'
-import { getBlogPosts } from '../supabase/blog-service'
-import type { BlogPost } from '../types'
+import { useAuth } from '../../contexts/AuthContext'
+import { getBlogPosts } from '../../supabase/blog-service'
+import type { BlogPost } from '../../types'
 
 function CreatePostButton() {
   const {
@@ -14,9 +14,7 @@ function CreatePostButton() {
   } = useAuth()
 
   if (authLoading) {
-    return (
-      <div className="w-32 h-10 bg-gray-200 animate-pulse rounded-md"></div>
-    )
+    return <div className="w-32 h-10 bg-gray-200 animate-pulse rounded-md" />
   }
 
   if (!isAuthenticated || adminLoading || !isAdmin) {
@@ -87,7 +85,7 @@ export default function Blog() {
   if (loading) {
     return (
       <BlogLayout>
-        <div className="text-center py-8">Loading...</div>
+        <div className="text-center py-8" />
       </BlogLayout>
     )
   }

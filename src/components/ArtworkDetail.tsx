@@ -2,14 +2,14 @@ import { ArrowLeft } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
+import { useAuth } from '../contexts/AuthContext'
 import {
   deleteArtwork,
   getArtworkWithImages
 } from '../services/artwork-service'
 import type { Artwork, ArtworkImage } from '../types'
-import { useAuth } from '../contexts/AuthContext'
 
-export const ArtworkDetail: React.FC = () => {
+export const ArtworkDetail = () => {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [artwork, setArtwork] = useState<Artwork | null>(null)

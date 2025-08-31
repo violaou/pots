@@ -1,23 +1,20 @@
 import { useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
-import {
-  ArtworkDetail,
-  ArtworkGrid,
-  Sidebar,
-  TopBar,
-  UnderConstruction
-} from './components'
+import { ArtworkDetail, Sidebar, TopBar, UnderConstruction } from './components'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
-import About from './pages/About'
-import Blog from './pages/Blog'
-import BlogPost from './pages/BlogPost'
-import { Contact } from './pages/Contact'
-import CreateBlogPost from './pages/CreateBlogPost'
-import { Login } from './pages/Login'
-import EditArtwork from './pages/EditArtwork'
-import EditBlogPost from './pages/EditBlogPost'
+
+import {
+  Contact,
+  Login,
+  ArtworkGrid,
+  About,
+  Blog,
+  BlogPost,
+  BlogPostForm,
+  EditArtwork
+} from './pages'
 
 const isDev = import.meta.env.DEV
 
@@ -60,7 +57,7 @@ function App() {
                 path="/blog/:id/edit"
                 element={
                   <ProtectedRoute adminOnly>
-                    <EditBlogPost />
+                    <BlogPostForm />
                   </ProtectedRoute>
                 }
               />
@@ -68,7 +65,7 @@ function App() {
                 path="/blog/create"
                 element={
                   <ProtectedRoute adminOnly>
-                    <CreateBlogPost />
+                    <BlogPostForm />
                   </ProtectedRoute>
                 }
               />

@@ -64,12 +64,12 @@ export async function updateBlogPost(
   updates: Partial<Omit<BlogPost, 'id'>>
 ): Promise<void> {
   const payload: Record<string, unknown> = {}
-  if (typeof updates.title !== 'undefined') payload.title = updates.title
-  if (typeof updates.content !== 'undefined') payload.content = updates.content
-  if (typeof updates.author !== 'undefined') payload.author = updates.author
-  if (typeof updates.date !== 'undefined') payload.post_date = updates.date
-  if (typeof updates.imageUrl !== 'undefined') payload.image_url = updates.imageUrl
-  if (typeof updates.tags !== 'undefined') payload.tags = updates.tags
+  if ('title' in updates) payload.title = updates.title
+  if ('content' in updates) payload.content = updates.content
+  if ('author' in updates) payload.author = updates.author
+  if ('date' in updates) payload.post_date = updates.date
+  if ('imageUrl' in updates) payload.image_url = updates.imageUrl
+  if ('tags' in updates) payload.tags = updates.tags
 
   const { error } = await supabase
     .from(BLOG_POSTS_TABLE)
@@ -80,16 +80,13 @@ export async function updateBlogPost(
 }
 
 export async function deleteBlogPost(id: string): Promise<void> {
-  // Fetch the post to know if it has an image to clean up
   const existing = await getBlogPost(id)
-
   const { error } = await supabase
     .from(BLOG_POSTS_TABLE)
     .delete()
     .eq('id', id)
 
   if (error) throw error
-
   if (existing?.imageUrl) {
     try {
       await deleteImageByPublicUrl(existing.imageUrl)

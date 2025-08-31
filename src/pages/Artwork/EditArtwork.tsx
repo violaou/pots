@@ -1,12 +1,12 @@
-import { z } from 'zod'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { z } from 'zod'
 
 import {
   getArtworkWithImages,
   updateArtwork
-} from '../services/artwork-service'
-import type { Artwork } from '../types'
+} from '../../services/artwork-service'
+import type { Artwork } from '../../types'
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),

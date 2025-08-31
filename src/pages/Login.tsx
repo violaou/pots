@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../contexts/AuthContext'
 
-export const Login = () => {
+export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<'magic' | 'signin' | 'signup'>('magic')

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
-import { deleteBlogPost, getBlogPost } from '../supabase/blog-service'
-import type { BlogPost } from '../types'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { deleteBlogPost, getBlogPost } from '../../supabase/blog-service'
+import type { BlogPost } from '../../types'
+import { BackToBlog } from './components'
 
 export default function BlogPost() {
   const { id } = useParams()
@@ -38,42 +39,29 @@ export default function BlogPost() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Link
-          to="/blog"
-          className="text-green-600 hover:text-green-800 mb-4 inline-block"
-        >
-          ← Back to Blog
-        </Link>
-        <div className="text-center py-8">Loading...</div>
+      <div className="flex flex-col items-center justify-center min-h-[40vh]">
+        {BackToBlog}
       </div>
     )
   }
 
   if (error || !post) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Link
-          to="/blog"
-          className="text-green-600 hover:text-green-800 mb-4 inline-block"
-        >
-          ← Back to Blog
-        </Link>
-        <h1 className="text-4xl font-bold mb-8">Post Not Found</h1>
-        <div className="text-red-600">{error}</div>
+      <div className="flex flex-col items-center justify-center min-h-[40vh]">
+        <h1 className="text-4xl font-bold mb-8 text-center">
+          Post Not Found 😔
+        </h1>
+        {BackToBlog}
       </div>
     )
   }
 
+  const inAdmin = !authLoading && isAuthenticated && !adminLoading && isAdmin
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link
-        to="/blog"
-        className="text-green-600 hover:text-green-800 mb-4 inline-block"
-      >
-        ← Back to Blog
-      </Link>
-      {!authLoading && isAuthenticated && !adminLoading && isAdmin && (
+      {BackToBlog}
+      {inAdmin && (
         <div className="flex gap-3 mb-4">
           <button
             onClick={() => navigate(`/blog/${id}/edit`)}
@@ -105,8 +93,6 @@ export default function BlogPost() {
       <article className="bg-soft-white rounded-lg shadow-md p-6">
         <h1 className="text-4xl  text-black font-bold mb-4">{post.title}</h1>
         <div className="text-sm text-black mb-6">
-          <span>By {post.author}</span>
-          <span className="mx-2">•</span>
           <span>{new Date(post.date).toLocaleDateString()}</span>
         </div>
         {post.imageUrl && (
@@ -117,6 +103,7 @@ export default function BlogPost() {
           />
         )}
         <div className="prose max-w-none text-black">
+          {/* TODO: add markdown support for the content */}
           {post.content.split('\n').map((paragraph, i) => (
             <p key={i} className="mb-4">
               {paragraph}
