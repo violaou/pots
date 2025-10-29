@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from 'zod'
 
 import type { Artwork, ArtworkImage, ArtworkListItem } from '../types'
@@ -7,7 +8,7 @@ import {
   pickNumber,
   pickString,
   withTrailingSlash
-} from './utils'
+} from '../utils/utils'
 
 // Schemas for validated, normalized shapes used by the UI
 const ArtworkImageSchema = z.object({

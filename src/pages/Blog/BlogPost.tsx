@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { useAuth } from '../../contexts/AuthContext'
-import { deleteBlogPost, getBlogPost } from '../../supabase/blog-service'
+import { deleteBlogPost, getBlogPost } from '../../services/blog-service'
 import type { BlogPost } from '../../types'
-import { BackToBlog } from './components'
+import { BackToBlog } from '../../components/BackToBlog'
 
 export default function BlogPost() {
   const { id } = useParams()

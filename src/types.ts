@@ -56,4 +56,5 @@ export interface ArtworkListItem {
   slug: string
   title: string
   heroImageUrl: string
+  sortOrder?: number
 }

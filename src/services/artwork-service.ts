@@ -204,6 +204,32 @@ export async function deleteArtwork(slug: string): Promise<void> {
   }
 }
 
+export async function reorderArtworks(artworkIds: string[]): Promise<void> {
+  const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
+  if (!baseUrl) throw new Error('Reordering artworks requires Data Connect backend')
+
+  // Snapshot for rollback
+  const prevList = artworkListCache ? [...artworkListCache] : null
+
+  // Optimistically update order in cache
+  if (artworkListCache) {
+    artworkListCache = artworkListCache.map((item, index) => ({
+      ...item,
+      sortOrder: artworkIds.indexOf(item.id) !== -1 ? artworkIds.indexOf(item.id) : index
+    }))
+  }
+
+  try {
+    // TODO:For now, we'll just update the cache since there's no backend reorder endpoint
+    // In a real implementation, you'd call a backend endpoint to update sortOrder
+    console.log('Reordered artworks:', artworkIds)
+  } catch (error) {
+    // Rollback on failure
+    if (prevList) artworkListCache = prevList
+    throw error
+  }
+}
+
 function normalizeCone(
   next: string | number | undefined,
   fallback: number | undefined

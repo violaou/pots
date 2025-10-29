@@ -13,7 +13,8 @@ import {
   Blog,
   BlogPost,
   BlogPostForm,
-  EditArtwork
+  EditArtwork,
+  EditArtworkGrid
 } from './pages'
 
 const isDev = import.meta.env.DEV
@@ -46,6 +47,14 @@ function App() {
                 element={
                   <ProtectedRoute adminOnly>
                     <EditArtwork />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/gallery/manage"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <EditArtworkGrid />
                   </ProtectedRoute>
                 }
               />

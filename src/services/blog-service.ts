@@ -1,7 +1,7 @@
+import { supabase } from '../supabase/client'
+import { BLOG_POSTS_TABLE } from '../supabase/constants'
+import { deleteImageByPublicUrl } from '../supabase/storage'
 import type { BlogPost } from '../types'
-import { supabase } from './client'
-import { BLOG_POSTS_TABLE } from './constants'
-import { deleteImageByPublicUrl } from './storage'
 
 export async function createBlogPost(
   post: Omit<BlogPost, 'id' | 'date'> & { date: string }

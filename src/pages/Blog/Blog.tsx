@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useAuth } from '../../contexts/AuthContext'
-import { getBlogPosts } from '../../supabase/blog-service'
+import { getBlogPosts } from '../../services/blog-service'
 import type { BlogPost } from '../../types'
 
 function CreatePostButton() {
