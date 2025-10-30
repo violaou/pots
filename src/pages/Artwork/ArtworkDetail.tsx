@@ -1,119 +1,14 @@
 import { ArrowLeft } from 'lucide-react'
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { useAuth } from '../contexts/AuthContext'
+import { ConfirmationModal } from '../../components/ConfirmationModal'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   deleteArtwork,
   getArtworkWithImages
-} from '../services/artwork-service'
-import type { Artwork, ArtworkImage } from '../types'
-
-export const ArtworkDetail = () => {
-  const { slug } = useParams<{ slug: string }>()
-  const navigate = useNavigate()
-  const [artwork, setArtwork] = useState<Artwork | null>(null)
-  const { isAdmin } = useAuth()
-
-  useEffect(() => {
-    if (!slug) return
-    let isMounted = true
-    getArtworkWithImages(slug).then((data) => {
-      if (isMounted) setArtwork(data)
-    })
-    return () => {
-      isMounted = false
-    }
-  }, [slug])
-
-  if (!artwork) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Artwork not found</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-5xl mx-auto px-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back
-        </button>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <HeroAndRelatedImages images={artwork.images} />
-          </div>
-          <div className="space-y-6">
-            <h1 className="text-2xl font-medium text-gray-900">
-              {artwork.title}
-            </h1>
-            {/* {isAdmin ? (
-              <div className="flex items-center gap-3">
-                <Link
-                  to={`/gallery/${artwork.slug}/edit`}
-                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={async () => {
-                    if (!slug) return
-                    const ok = window.confirm(
-                      'Delete this artwork? This cannot be undone.'
-                    )
-                    if (!ok) return
-                    try {
-                      await deleteArtwork(slug)
-                      navigate('/gallery')
-                    } catch (err) {
-                      console.error('Delete failed', err)
-                      alert('Failed to delete artwork')
-                    }
-                  }}
-                  className="px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50"
-                >
-                  Delete
-                </button>
-              </div>
-            ) : null} */}
-            {artwork.description ? (
-              <p className="text-gray-600">{artwork.description}</p>
-            ) : null}
-            <div className="space-y-4 pt-4">
-              {/* {artwork.materials ? (
-                <div className="flex justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-500">Materials</span>
-                  <span>{artwork.materials}</span>
-                </div>
-              ) : null}
-              {typeof artwork.cone === 'number' ? (
-                <div className="flex justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-500">Firing Cone</span>
-                  <span>cone {artwork.cone}</span>
-                </div>
-              ) : null} */}
-              {/* <div className="flex justify-between py-2 border-t border-gray-100">
-                <span className="text-gray-500">Microwave Safe</span>
-                <span>{artwork.isMicrowaveSafe ? 'Yes' : 'No'}</span>
-              </div>
-              <div className="flex justify-between py-2 border-t border-gray-100">
-                <span className="text-gray-500">Dishwasher Safe</span>
-                <span>{artwork.isDishwasherSafe ? 'Yes' : 'No'}</span>
-              </div> */}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
+} from '../../services/artwork-service'
+import type { Artwork, ArtworkImage } from '../../types'
 /**
  * Sort the artwork images by their sort order,
  * with the hero image first, then the rest by sort order.
@@ -156,6 +51,123 @@ function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
           ))}
         </div>
       ) : null}
+    </div>
+  )
+}
+
+export const ArtworkDetail = () => {
+  const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
+  const [artwork, setArtwork] = useState<Artwork | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { isAdmin } = useAuth()
+
+  useEffect(() => {
+    if (!slug) return
+    let isMounted = true
+    getArtworkWithImages(slug).then((data) => {
+      if (isMounted) setArtwork(data)
+    })
+    return () => {
+      isMounted = false
+    }
+  }, [slug])
+
+  const handleDelete = async () => {
+    if (!slug) return
+    setIsDeleting(true)
+    try {
+      await deleteArtwork(slug)
+      navigate('/gallery')
+    } catch (err) {
+      console.error('Delete failed', err)
+      alert('Failed to delete artwork')
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteModal(false)
+    }
+  }
+
+  if (!artwork) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">Artwork not found</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen py-8">
+      <div className="max-w-5xl mx-auto px-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back
+        </button>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <HeroAndRelatedImages images={artwork.images} />
+          </div>
+          <div className="space-y-6">
+            <h1 className="text-2xl font-medium text-gray-900">
+              {artwork.title}
+            </h1>
+            {isAdmin ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  to={`/gallery/${artwork.slug}/edit`}
+                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null}
+            {artwork.description ? (
+              <p className="text-gray-600">{artwork.description}</p>
+            ) : null}
+            <div className="space-y-4 pt-4">
+              {artwork.materials ? (
+                <div className="flex justify-between py-2 border-t border-gray-100">
+                  <span className="text-gray-500">Materials</span>
+                  <span>{artwork.materials}</span>
+                </div>
+              ) : null}
+              {typeof artwork.cone === 'number' ? (
+                <div className="flex justify-between py-2 border-t border-gray-100">
+                  <span className="text-gray-500">Firing Cone</span>
+                  <span>cone {artwork.cone}</span>
+                </div>
+              ) : null}
+              <div className="flex justify-between py-2 border-t border-gray-100">
+                <span className="text-gray-500">Microwave Safe</span>
+                <span>{artwork.isMicrowaveSafe ? 'Yes' : 'No'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Delete Artwork"
+        message="Are you sure you want to delete this artwork? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

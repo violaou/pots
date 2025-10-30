@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 
+import { useAuth } from '../../contexts/AuthContext'
 import {
   getArtworkWithImages,
   updateArtwork
@@ -20,6 +21,7 @@ const formSchema = z.object({
 export default function EditArtwork() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  const { isAdmin, adminLoading, loading: authLoading } = useAuth()
 
   const [artwork, setArtwork] = useState<Artwork | null>(null)
   const [form, setForm] = useState<z.infer<typeof formSchema>>({
@@ -85,6 +87,27 @@ export default function EditArtwork() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (authLoading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">Loading…</p>
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-red-600 mb-2">Access Denied</p>
+          <p className="text-sm text-gray-600">
+            You must be an admin to edit artwork.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   if (!artwork) {
@@ -174,7 +197,7 @@ export default function EditArtwork() {
             </button>
             <button
               type="button"
-              onClick={() => navigate(`/gallery/${slug}`)}
+              onClick={() => navigate(-1)}
               className="px-4 py-2 rounded border"
             >
               Cancel

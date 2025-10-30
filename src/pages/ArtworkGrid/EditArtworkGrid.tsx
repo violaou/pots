@@ -266,9 +266,17 @@ export default function EditArtworkGrid() {
               Drag to reorder • Click delete to remove
             </p>
           </div>
-          <Link to="/gallery" className={STYLES.backButton}>
-            Back to Gallery
-          </Link>
+          <div className="flex space-x-2">
+            <Link
+              to="/gallery/add"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Add Artwork
+            </Link>
+            <Link to="/gallery" className={STYLES.backButton}>
+              Back to Gallery
+            </Link>
+          </div>
         </div>
 
         {/* Artwork Grid */}

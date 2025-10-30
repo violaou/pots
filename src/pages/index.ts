@@ -1,5 +1,7 @@
 export { default as About } from './About'
+export { ArtworkDetail } from './Artwork/ArtworkDetail'
 export { default as EditArtwork } from './Artwork/EditArtwork'
+export { default as AddArtwork } from './ArtworkGrid/AddArtwork'
 export { default as ArtworkGrid } from './ArtworkGrid/ArtworkGrid'
 export { default as EditArtworkGrid } from './ArtworkGrid/EditArtworkGrid'
 export * from './Blog'

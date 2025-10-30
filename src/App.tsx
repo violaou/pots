@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
-import { ArtworkDetail, Sidebar, TopBar, UnderConstruction } from './components'
+import { Sidebar, TopBar, UnderConstruction } from './components'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 
@@ -9,6 +9,8 @@ import {
   Contact,
   Login,
   ArtworkGrid,
+  AddArtwork,
+  ArtworkDetail,
   About,
   Blog,
   BlogPost,
@@ -47,6 +49,14 @@ function App() {
                 element={
                   <ProtectedRoute adminOnly>
                     <EditArtwork />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/gallery/add"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AddArtwork />
                   </ProtectedRoute>
                 }
               />
