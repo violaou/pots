@@ -38,19 +38,15 @@ function App() {
           <Sidebar />
           <div className="lg:pl-64 pt-16 lg:pt-0" id="main-content">
             <Routes>
+              <Route path="/" element={<About />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/login" element={<Login />} />
+
+              {/* Gallery routes - specific paths first */}
               <Route
                 path="/gallery"
                 element={isDev ? <ArtworkGrid /> : <UnderConstruction />}
-              />
-              <Route path="/" element={<About />} />
-              <Route path="/gallery/:slug" element={<ArtworkDetail />} />
-              <Route
-                path="/gallery/:slug/edit"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <EditArtwork />
-                  </ProtectedRoute>
-                }
               />
               <Route
                 path="/gallery/add"
@@ -68,18 +64,18 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:id" element={<BlogPost />} />
               <Route
-                path="/blog/:id/edit"
+                path="/gallery/:slug/edit"
                 element={
                   <ProtectedRoute adminOnly>
-                    <BlogPostForm />
+                    <EditArtwork />
                   </ProtectedRoute>
                 }
               />
+              <Route path="/gallery/:slug" element={<ArtworkDetail />} />
+
+              {/* Blog routes - specific paths first */}
+              <Route path="/blog" element={<Blog />} />
               <Route
                 path="/blog/create"
                 element={
@@ -88,7 +84,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/login" element={<Login />} />
+              <Route
+                path="/blog/:id/edit"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <BlogPostForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/blog/:id" element={<BlogPost />} />
             </Routes>
           </div>
         </div>
