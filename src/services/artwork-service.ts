@@ -101,7 +101,9 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
 
 export async function getArtworkWithImages(slug: string): Promise<Artwork | null> {
   const cached = artworkDetailCache.get(slug)
-  if (cached) return cached
+  if (cached) {
+    return cached
+  }
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
   if (baseUrl) {
     try {
