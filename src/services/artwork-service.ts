@@ -1,12 +1,8 @@
 import { artworks as staticArtworks } from '../artworks'
 import type { Artwork, ArtworkImage, ArtworkListItem } from '../types'
 import { toSlug } from '../utils/slug'
-import {
-  type ArtworkUpdateInput,
-  sb_deleteArtwork,
-  sb_getArtworkWithImages,
-  sb_listArtworks,
-  sb_updateArtwork} from './data-connect-adapter'
+import type { ArtworkUpdateInput } from './artwork-api-client'
+import * as apiClient from './artwork-api-client'
 
 // Simple in-memory caches for optimistic UI
 let artworkListCache: ArtworkListItem[] | null = null
@@ -86,12 +82,12 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
   if (baseUrl) {
     try {
-      const list = await sb_listArtworks(baseUrl)
+      const list = await apiClient.listArtworks(baseUrl)
       artworkListCache = list
       return list
     } catch (error) {
       // Fallback to static mapped data on error
-      console.warn('[data-connect] listArtworks failed, falling back to static:', error)
+      console.warn('[artwork-api] listArtworks failed, falling back to static:', error)
     }
   }
   const list = mapStaticToArtworkList()
@@ -107,13 +103,13 @@ export async function getArtworkWithImages(slug: string): Promise<Artwork | null
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
   if (baseUrl) {
     try {
-      const result = await sb_getArtworkWithImages(baseUrl, slug)
+      const result = await apiClient.getArtworkWithImages(baseUrl, slug)
       if (result) {
         artworkDetailCache.set(slug, result)
         return result
       }
     } catch (error) {
-      console.warn('[data-connect] getArtworkWithImages failed, falling back to static:', error)
+      console.warn('[artwork-api] getArtworkWithImages failed, falling back to static:', error)
     }
   }
   const fallback = mapStaticToArtwork(slug)
@@ -126,7 +122,7 @@ export async function updateArtwork(
   updates: ArtworkUpdateInput
 ): Promise<Artwork> {
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-  if (!baseUrl) throw new Error('Updating artworks requires Data Connect backend')
+  if (!baseUrl) throw new Error('Updating artworks requires artwork API backend')
   // Snapshot for rollback
   const prevDetail = artworkDetailCache.get(slug)
   const prevList = artworkListCache ? [...artworkListCache] : null
@@ -158,7 +154,7 @@ export async function updateArtwork(
   }
 
   try {
-    const saved = await sb_updateArtwork(baseUrl, slug, updates)
+    const saved = await apiClient.updateArtwork(baseUrl, slug, updates)
 
     // If slug changed on the server, move cache entry
     if (saved.slug !== slug) {
@@ -185,7 +181,7 @@ export async function updateArtwork(
 
 export async function deleteArtwork(slug: string): Promise<void> {
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-  if (!baseUrl) throw new Error('Deleting artworks requires Data Connect backend')
+  if (!baseUrl) throw new Error('Deleting artworks requires artwork API backend')
   // Snapshot caches
   const prevList = artworkListCache ? [...artworkListCache] : null
   const prevDetail = artworkDetailCache.get(slug)
@@ -197,7 +193,7 @@ export async function deleteArtwork(slug: string): Promise<void> {
   artworkDetailCache.delete(slug)
 
   try {
-    await sb_deleteArtwork(baseUrl, slug)
+    await apiClient.deleteArtwork(baseUrl, slug)
   } catch (error) {
     // Rollback
     if (prevList) artworkListCache = prevList
@@ -208,7 +204,7 @@ export async function deleteArtwork(slug: string): Promise<void> {
 
 export async function reorderArtworks(artworkIds: string[]): Promise<void> {
   const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-  if (!baseUrl) throw new Error('Reordering artworks requires Data Connect backend')
+  if (!baseUrl) throw new Error('Reordering artworks requires artwork API backend')
 
   // Snapshot for rollback
   const prevList = artworkListCache ? [...artworkListCache] : null
