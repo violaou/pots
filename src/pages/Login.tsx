@@ -3,23 +3,50 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../contexts/AuthContext'
 
-export const Login = () => {
+export default function Login() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mode, setMode] = useState<'magic' | 'signin' | 'signup'>('magic')
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { sendMagicLink, signInWithPassword, signUpWithEmail } = useAuth()
 
-  const handleGoogleLogin = async () => {
+  async function handleSubmit() {
+    setError('')
+    setMessage('')
+    if (!email) {
+      setError('Email is required')
+      return
+    }
+    setIsSubmitting(true)
     try {
-      setError('')
-      await login()
-      navigate('/blog')
-    } catch (err) {
-      console.error('Login error:', err)
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('An unexpected error occurred during sign in')
+      if (mode === 'magic') {
+        await sendMagicLink(email)
+        setMessage('Check your email for a sign-in link.')
+        return
       }
+      if (!password) {
+        setError('Password is required')
+        return
+      }
+      if (mode === 'signin') {
+        await signInWithPassword(email, password)
+        navigate('/blog')
+        return
+      }
+      if (mode === 'signup') {
+        await signUpWithEmail(email, password)
+        setMessage('Sign-up email sent. Confirm it, then sign in.')
+        return
+      }
+    } catch (err) {
+      console.error('Auth error:', err)
+      if (err instanceof Error) setError(err.message)
+      else setError('An unexpected error occurred')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -37,13 +64,89 @@ export const Login = () => {
               {error}
             </div>
           )}
+          {message && (
+            <div className="text-green-700 text-sm text-center p-4 bg-green-50 rounded-md">
+              {message}
+            </div>
+          )}
 
-          <div>
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </div>
+
+            {mode !== 'magic' && (
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                  placeholder="Your password"
+                  autoComplete={
+                    mode === 'signin' ? 'current-password' : 'new-password'
+                  }
+                />
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setMode('magic')}
+                className={`flex-1 py-2 rounded-md text-sm border ${mode === 'magic' ? 'bg-yellow-200 border-yellow-400' : 'bg-white border-gray-300'}`}
+                type="button"
+              >
+                Use magic link
+              </button>
+              <button
+                onClick={() => setMode('signin')}
+                className={`flex-1 py-2 rounded-md text-sm border ${mode === 'signin' ? 'bg-yellow-200 border-yellow-400' : 'bg-white border-gray-300'}`}
+                type="button"
+              >
+                Password sign in
+              </button>
+              <button
+                onClick={() => setMode('signup')}
+                className={`flex-1 py-2 rounded-md text-sm border ${mode === 'signup' ? 'bg-yellow-200 border-yellow-400' : 'bg-white border-gray-300'}`}
+                type="button"
+              >
+                Sign up
+              </button>
+            </div>
+
             <button
-              onClick={handleGoogleLogin}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-yellow-200 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-yellow-200 hover:bg-yellow-300 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
             >
-              Sign in with Google
+              {isSubmitting
+                ? 'Submitting...'
+                : mode === 'magic'
+                  ? 'Send magic link'
+                  : mode === 'signin'
+                    ? 'Sign in'
+                    : 'Create account'}
             </button>
           </div>
 

@@ -1,13 +1,15 @@
-import { ChangeEvent, FormEvent, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { useAuth } from '../contexts/AuthContext'
-import { createBlogPost } from '../services/blog-adapter'
-import { uploadImage } from '../services/image-adapter'
-import type { BlogPost } from '../types'
+import { useAuth } from '../../contexts/AuthContext'
+import { getBlogPost, updateBlogPost } from '../../services/blog-service'
+import { uploadImage } from '../../supabase/storage'
+import type { BlogPost } from '../../types'
+import { BackToBlog } from '../../components/BackToBlog'
 
-export default function CreateBlogPost() {
+export default function EditBlogPost() {
   const navigate = useNavigate()
+  const { id } = useParams()
   const { user } = useAuth()
   const [formData, setFormData] = useState<Omit<BlogPost, 'id'>>({
     title: '',
@@ -16,32 +18,64 @@ export default function CreateBlogPost() {
     date: new Date().toISOString().split('T')[0],
     tags: []
   })
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
+  useEffect(() => {
+    async function fetchPost() {
+      if (!id) return
+      try {
+        const post = await getBlogPost(id)
+        if (!post) {
+          setError('Post not found')
+          return
+        }
+        setFormData({
+          title: post.title,
+          content: post.content,
+          author: post.author,
+          date: post.date,
+          imageUrl: post.imageUrl,
+          tags: post.tags ?? []
+        })
+        setImagePreview(post.imageUrl ?? null)
+      } catch (err) {
+        setError('Failed to load blog post')
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPost()
+  }, [id])
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (!id) return
+    setSaving(true)
     setError(null)
 
     try {
       let imageUrl = formData.imageUrl
-      if (imageFile) {
-        imageUrl = await uploadImage(imageFile)
-      }
+      if (imageFile) imageUrl = await uploadImage(imageFile)
 
-      await createBlogPost({
-        ...formData,
-        imageUrl
+      await updateBlogPost(id, {
+        title: formData.title,
+        content: formData.content,
+        author: formData.author,
+        date: formData.date,
+        imageUrl,
+        tags: formData.tags
       })
-      navigate('/blog')
+      navigate(`/blog/${id}`)
     } catch (err) {
-      setError('Failed to create blog post')
+      setError('Failed to update blog post')
       console.error(err)
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
@@ -53,25 +87,34 @@ export default function CreateBlogPost() {
   }
 
   const handleTagsChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const tags = e.target.value.split(',').map((tag) => tag.trim())
+    const tags = e.target.value
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean)
     setFormData((prev) => ({ ...prev, tags }))
   }
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+    if (!file) return
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh]">
+        {BackToBlog}
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">Create New Blog Post</h1>
+      {BackToBlog}
+      <h1 className="text-4xl font-bold mb-8">Edit Blog Post</h1>
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
@@ -79,7 +122,7 @@ export default function CreateBlogPost() {
       )}
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
         <div className="space-y-6">
-          <div>
+          <>
             <label
               htmlFor="title"
               className="block text-sm font-medium text-gray-700"
@@ -94,11 +137,11 @@ export default function CreateBlogPost() {
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
               required
-              disabled={loading}
+              disabled={saving}
             />
-          </div>
+          </>
 
-          <div>
+          <>
             <label
               htmlFor="author"
               className="block text-sm font-medium text-gray-700"
@@ -116,9 +159,9 @@ export default function CreateBlogPost() {
               disabled={true}
               readOnly
             />
-          </div>
+          </>
 
-          <div>
+          <>
             <label
               htmlFor="content"
               className="block text-sm font-medium text-gray-700"
@@ -133,11 +176,11 @@ export default function CreateBlogPost() {
               rows={10}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
               required
-              disabled={loading}
+              disabled={saving}
             />
-          </div>
+          </>
 
-          <div>
+          <>
             <label
               htmlFor="image"
               className="block text-sm font-medium text-gray-700"
@@ -156,7 +199,7 @@ export default function CreateBlogPost() {
                 file:text-sm file:font-semibold
                 file:bg-green-50 file:text-green-700
                 hover:file:bg-green-100"
-              disabled={loading}
+              disabled={saving}
             />
             {imagePreview && (
               <div className="mt-4">
@@ -167,9 +210,9 @@ export default function CreateBlogPost() {
                 />
               </div>
             )}
-          </div>
+          </>
 
-          <div>
+          <>
             <label
               htmlFor="tags"
               className="block text-sm font-medium text-gray-700"
@@ -183,17 +226,25 @@ export default function CreateBlogPost() {
               value={formData.tags?.join(', ')}
               onChange={handleTagsChange}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
-              disabled={loading}
+              disabled={saving}
             />
-          </div>
+          </>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => (id ? navigate(`/blog/${id}`) : navigate('/blog'))}
+              className="bg-gray-200 text-black px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={saving}
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              disabled={saving}
             >
-              {loading ? 'Creating...' : 'Create Post'}
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>

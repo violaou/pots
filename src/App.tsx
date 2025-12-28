@@ -1,20 +1,23 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Route,Routes } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
-import {
-  ArtworkDetail,
-  ArtworkGrid,
-  Sidebar,
-  TopBar,
-  UnderConstruction} from './components'
+import { Sidebar, TopBar } from './components'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
-import About from './pages/About'
-import Blog from './pages/Blog'
-import BlogPost from './pages/BlogPost'
-import { Contact } from './pages/Contact'
-import CreateBlogPost from './pages/CreateBlogPost'
-import { Login } from './pages/Login'
+
+import {
+  Contact,
+  Login,
+  ArtworkGrid,
+  AddArtwork,
+  ArtworkDetail,
+  About,
+  Blog,
+  BlogPost,
+  BlogPostForm,
+  EditArtwork,
+  EditArtworkGrid
+} from './pages'
 
 const isDev = import.meta.env.DEV
 
@@ -35,25 +38,58 @@ function App() {
           <Sidebar />
           <div className="lg:pl-64 pt-16 lg:pt-0" id="main-content">
             <Routes>
-              <Route
-                path="/gallery"
-                element={isDev ? <ArtworkGrid /> : <UnderConstruction />}
-              />
               <Route path="/" element={<About />} />
-              <Route path="/gallery/:slug" element={<ArtworkDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/login" element={<Login />} />
+
+              {/* Gallery routes - specific paths first */}
+              <Route path="/gallery" element={<ArtworkGrid />} />
+              <Route
+                path="/gallery/add"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AddArtwork />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/gallery/manage"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <EditArtworkGrid />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/gallery/:slug/edit"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <EditArtwork />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/gallery/:slug" element={<ArtworkDetail />} />
+
+              {/* Blog routes - specific paths first */}
               <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:id" element={<BlogPost />} />
               <Route
                 path="/blog/create"
                 element={
                   <ProtectedRoute adminOnly>
-                    <CreateBlogPost />
+                    <BlogPostForm />
                   </ProtectedRoute>
                 }
               />
-              <Route path="/login" element={<Login />} />
+              <Route
+                path="/blog/:id/edit"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <BlogPostForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/blog/:id" element={<BlogPost />} />
             </Routes>
           </div>
         </div>

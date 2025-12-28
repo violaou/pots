@@ -12,8 +12,11 @@ export const ProtectedRoute = ({
   children,
   adminOnly
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isAdmin, adminLoading } = useAuth()
+  const { isAuthenticated, isAdmin, adminLoading, loading } = useAuth()
   const location = useLocation()
+
+  // Wait for auth to initialize to avoid redirecting before session is loaded
+  if (loading) return null
 
   if (!isAuthenticated) {
     // Redirect to login page but save the attempted location

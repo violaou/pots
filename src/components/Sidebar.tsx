@@ -5,7 +5,7 @@ import violaPotsLogo from '../assets/viola-pots.png'
 import { useAuth } from '../contexts/AuthContext'
 import { getNavItems } from './TopBar'
 
-export const Sidebar = () => {
+export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { isAuthenticated, logout } = useAuth()
