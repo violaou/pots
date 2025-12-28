@@ -1,3 +1,13 @@
+/**
+ * Supabase Storage Service for Blog Images
+ *
+ * NOTE: Blog images currently use Supabase Storage.
+ * Artwork images use DigitalOcean Spaces (see services/s3-upload.ts).
+ *
+ * TODO: Consider migrating blog images to DO Spaces for consistency.
+ * This would unify image storage and potentially reduce costs.
+ */
+
 import { supabase } from './client'
 import { BLOG_IMAGES_BUCKET } from './constants'
 

@@ -6,6 +6,8 @@ import { z } from 'zod'
 
 import { ImageUploadSection, type ImagePreview } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
+import { createArtwork } from '../../services/artwork-service'
+import { uploadImage, isMockMode } from '../../services/s3-upload'
 
 // Form validation schema
 const artworkSchema = z.object({
@@ -86,9 +88,13 @@ export default function AddArtwork() {
   // Image state (separate from form since React Hook Form doesn't handle file previews well)
   const [images, setImages] = useState<ImagePreview[]>([])
   const [imageError, setImageError] = useState<string>('')
+  const [uploadStatus, setUploadStatus] = useState<string>('')
 
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
+
+  // Show mock mode indicator in development
+  const isUsingMockUpload = isMockMode()
 
   // Access control
   if (!isAdmin) {
@@ -119,25 +125,46 @@ export default function AddArtwork() {
     }
 
     try {
-      // TODO: Here you would integrate with Cloudinary upload service
-      console.log('Form data:', data)
-      console.log(
-        'Images to upload:',
-        images.map((img) => ({
-          file: img.file,
-          alt: img.alt,
-          isHero: img.isHero
-        }))
+      // Step 1: Upload images to S3 (or mock in dev)
+      setUploadStatus('Uploading images...')
+      const uploadedImages = await Promise.all(
+        images.map(async (img, index) => {
+          setUploadStatus(`Uploading image ${index + 1} of ${images.length}...`)
+          const cdnUrl = await uploadImage(img.file)
+          return {
+            cdnUrl,
+            alt: img.alt || data.title,
+            isHero: img.isHero
+          }
+        })
       )
 
-      // For now, just show success message
-      alert('Artwork form is ready! (Image upload integration pending)')
+      // Step 2: Create artwork record with image URLs
+      setUploadStatus('Saving artwork...')
+      const artwork = await createArtwork({
+        title: data.title,
+        description: data.description,
+        materials: data.materials,
+        clay: data.clay,
+        cone: typeof data.cone === 'number' ? String(data.cone) : data.cone,
+        isMicrowaveSafe: data.isMicrowaveSafe,
+        altText: data.altText,
+        images: uploadedImages
+      })
 
-      // Navigate back to gallery
-      navigate('/gallery')
+      setUploadStatus('')
+      if (import.meta.env.DEV) {
+        console.log('[AddArtwork] Created artwork:', artwork.slug)
+      }
+
+      // Navigate to the new artwork
+      navigate(`/gallery/${artwork.slug}`)
     } catch (error) {
+      setUploadStatus('')
       console.error('Form submission error:', error)
-      alert('An error occurred. Please try again.')
+      const message =
+        error instanceof Error ? error.message : 'An error occurred'
+      alert(`Failed to add artwork: ${message}`)
     }
   }
 
@@ -162,6 +189,16 @@ export default function AddArtwork() {
           {/* Images Section */}
           <div className={STYLES.formSection}>
             <h2 className={STYLES.sectionTitle}>Images</h2>
+            {isUsingMockUpload && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
+                <strong>Dev Mode:</strong> Images will use local blob URLs (not
+                persisted). Set{' '}
+                <code className="bg-amber-100 px-1 rounded">
+                  VITE_USE_REAL_UPLOAD=true
+                </code>{' '}
+                for real uploads.
+              </div>
+            )}
             <ImageUploadSection
               images={images}
               onImagesChange={handleImagesChange}
@@ -293,7 +330,7 @@ export default function AddArtwork() {
               disabled={isSubmitting}
               className={STYLES.submitButton}
             >
-              {isSubmitting ? 'Adding...' : 'Add Artwork'}
+              {isSubmitting ? uploadStatus || 'Adding...' : 'Add Artwork'}
             </button>
           </div>
         </form>

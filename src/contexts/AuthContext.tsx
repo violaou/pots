@@ -8,7 +8,6 @@ import {
 } from 'react'
 
 import {
-  getCurrentAuthUser as sbGetCurrentAuthUser,
   isAdmin as sbIsAdmin,
   logout as sbLogout,
   onAuthStateChange as sbOnAuthStateChange,
@@ -83,28 +82,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return
     }
 
-    // Initialize from current session to avoid redirect race conditions
-    ;(async () => {
-      const current = await sbGetCurrentAuthUser()
-      const mappedUser = mapAuthUserFromSupabase(current as SupabaseUser | null)
-      setUser(mappedUser)
-      if (mappedUser) {
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mappedUser))
-        setAdminLoading(true)
-        sbIsAdmin(mappedUser.uid)
-          .then((member) => setIsAdmin(!!member))
-          .catch((err) => {
-            console.error('Failed to determine admin membership', err)
-            setIsAdmin(false)
-          })
-          .finally(() => setAdminLoading(false))
-      } else {
-        setIsAdmin(false)
-        setAdminLoading(false)
-      }
-      setLoading(false)
-    })()
-
+    // onAuthStateChange fires immediately with the current session,
+    // so we don't need a separate initialization call
     const unsubscribe = sbOnAuthStateChange((authUser) => {
       const mappedUser = mapAuthUserFromSupabase(
         authUser as SupabaseUser | null
