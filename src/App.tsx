@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
-import { Sidebar, TopBar, UnderConstruction } from './components'
+import { Sidebar, TopBar } from './components'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 
@@ -44,10 +44,7 @@ function App() {
               <Route path="/login" element={<Login />} />
 
               {/* Gallery routes - specific paths first */}
-              <Route
-                path="/gallery"
-                element={isDev ? <ArtworkGrid /> : <UnderConstruction />}
-              />
+              <Route path="/gallery" element={<ArtworkGrid />} />
               <Route
                 path="/gallery/add"
                 element={
