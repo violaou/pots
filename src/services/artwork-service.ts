@@ -1,10 +1,21 @@
 import { artworks as staticArtworks } from '../artworks'
-import { getCurrentAuthUser,isAdmin as checkIsAdmin } from '../supabase/auth'
+import { getCurrentAuthUser, isAdmin as checkIsAdmin } from '../supabase/auth'
 import { supabase } from '../supabase/client'
 import type { Artwork, ArtworkImage, ArtworkListItem } from '../types'
 import { toSlug } from '../utils/slug'
-import type { ArtworkUpdateInput } from './artwork-api-client'
-import * as apiClient from './artwork-api-client'
+import { deleteImage as deleteDoSpacesImage, isDoSpacesUrl } from './s3-upload'
+
+/**
+ * Input for updating an existing artwork.
+ */
+export interface ArtworkUpdateInput {
+  title?: string
+  description?: string
+  clay?: string
+  cone?: string | number
+  isMicrowaveSafe?: boolean
+  isPublished?: boolean
+}
 
 // Simple in-memory caches for optimistic UI
 let artworkListCache: ArtworkListItem[] | null = null
@@ -81,50 +92,40 @@ function mapStaticToArtwork(slug: string): Artwork | null {
 
 export async function listArtworks(): Promise<ArtworkListItem[]> {
   if (artworkListCache) return artworkListCache
-  const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-  if (baseUrl) {
-    try {
-      const list = await apiClient.listArtworks(baseUrl)
+
+  try {
+    const { data, error } = await supabase
+      .from('artworks')
+      .select(`
+        id,
+        slug,
+        title,
+        artwork_images!inner (
+          image_url,
+          is_hero
+        )
+      `)
+      .eq('is_published', true)
+      .eq('artwork_images.is_hero', true)
+      .order('created_at', { ascending: false })
+
+    if (!error && data) {
+      const list: ArtworkListItem[] = data.map((item) => ({
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        heroImageUrl: Array.isArray(item.artwork_images)
+          ? item.artwork_images[0]?.image_url || ''
+          : ''
+      }))
       artworkListCache = list
       return list
-    } catch (error) {
-      // Fallback to static mapped data on error
-      console.warn('[artwork-api] listArtworks failed, falling back to static:', error)
     }
-  } else {
-    // Direct Supabase fetch when no API backend
-    try {
-      const { data, error } = await supabase
-        .from('artworks')
-        .select(`
-          id,
-          slug,
-          title,
-          artwork_images!inner (
-            image_url,
-            is_hero
-          )
-        `)
-        .eq('is_published', true)
-        .eq('artwork_images.is_hero', true)
-        .order('created_at', { ascending: false })
-
-      if (!error && data) {
-        const list: ArtworkListItem[] = data.map((item) => ({
-          id: item.id,
-          slug: item.slug,
-          title: item.title,
-          heroImageUrl: Array.isArray(item.artwork_images)
-            ? item.artwork_images[0]?.image_url || ''
-            : ''
-        }))
-        artworkListCache = list
-        return list
-      }
-    } catch (error) {
-      console.warn('[artwork-service] listArtworks failed:', error)
-    }
+  } catch (error) {
+    console.warn('[artwork-service] listArtworks failed:', error)
   }
+
+  // Fallback to static data
   const list = mapStaticToArtworkList()
   artworkListCache = list
   return list
@@ -135,68 +136,57 @@ export async function getArtworkWithImages(slug: string): Promise<Artwork | null
   if (cached) {
     return cached
   }
-  const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-  if (baseUrl) {
-    try {
-      const result = await apiClient.getArtworkWithImages(baseUrl, slug)
-      if (result) {
-        artworkDetailCache.set(slug, result)
-        return result
-      }
-    } catch (error) {
-      console.warn('[artwork-api] getArtworkWithImages failed, falling back:', error)
+
+  try {
+    const { data: artworkData, error: artworkError } = await supabase
+      .from('artworks')
+      .select('*')
+      .eq('slug', slug)
+      .single()
+
+    if (artworkError || !artworkData) {
+      console.warn('[artwork-service] Artwork not found:', slug)
+      return mapStaticToArtwork(slug)
     }
-  } else {
-    // Direct Supabase fetch when no API backend
-    try {
-      const { data: artworkData, error: artworkError } = await supabase
-        .from('artworks')
-        .select('*')
-        .eq('slug', slug)
-        .single()
 
-      if (artworkError || !artworkData) {
-        console.warn('[artwork-service] Artwork not found:', slug)
-        return mapStaticToArtwork(slug)
-      }
+    const { data: imagesData } = await supabase
+      .from('artwork_images')
+      .select('*')
+      .eq('artwork_id', artworkData.id)
+      .order('sort_order', { ascending: true })
 
-      const { data: imagesData } = await supabase
-        .from('artwork_images')
-        .select('*')
-        .eq('artwork_id', artworkData.id)
-        .order('sort_order', { ascending: true })
+    const images: ArtworkImage[] = (imagesData || []).map((img) => ({
+      id: img.id,
+      artworkId: img.artwork_id,
+      imageUrl: img.image_url,
+      alt: img.alt,
+      sortOrder: img.sort_order,
+      isHero: img.is_hero,
+      createdAt: img.created_at
+    }))
 
-      const images: ArtworkImage[] = (imagesData || []).map((img) => ({
-        id: img.id,
-        artworkId: img.artwork_id,
-        imageUrl: img.image_url,
-        alt: img.alt,
-        sortOrder: img.sort_order,
-        isHero: img.is_hero,
-        createdAt: img.created_at
-      }))
-
-      const artwork: Artwork = {
-        id: artworkData.id,
-        slug: artworkData.slug,
-        title: artworkData.title,
-        description: artworkData.description,
-        materials: undefined,
-        clay: artworkData.clay,
-        cone: artworkData.cone ? parseInt(artworkData.cone.replace(/\D/g, ''), 10) : undefined,
-        isMicrowaveSafe: artworkData.is_microwave_safe,
-        altText: undefined,
-        createdAt: artworkData.created_at,
-        updatedAt: artworkData.updated_at,
-        images
-      }
-
-      artworkDetailCache.set(slug, artwork)
-      return artwork
-    } catch (error) {
-      console.warn('[artwork-service] getArtworkWithImages failed:', error)
+    const artwork: Artwork = {
+      id: artworkData.id,
+      slug: artworkData.slug,
+      title: artworkData.title,
+      description: artworkData.description,
+      materials: undefined,
+      clay: artworkData.clay,
+      cone: artworkData.cone ? parseInt(artworkData.cone.replace(/\D/g, ''), 10) : undefined,
+      isMicrowaveSafe: artworkData.is_microwave_safe,
+      altText: undefined,
+      createdAt: artworkData.created_at,
+      updatedAt: artworkData.updated_at,
+      images
     }
+
+    artworkDetailCache.set(slug, artwork)
+    return artwork
+  } catch (error) {
+    console.warn('[artwork-service] getArtworkWithImages failed:', error)
   }
+
+  // Fallback to static data
   const fallback = mapStaticToArtwork(slug)
   if (fallback) artworkDetailCache.set(slug, fallback)
   return fallback
@@ -206,8 +196,9 @@ export async function updateArtwork(
   slug: string,
   updates: ArtworkUpdateInput
 ): Promise<Artwork> {
-  const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-  if (!baseUrl) throw new Error('Updating artworks requires artwork API backend')
+  // Verify admin access
+  await requireAdmin()
+
   // Snapshot for rollback
   const prevDetail = artworkDetailCache.get(slug)
   const prevList = artworkListCache ? [...artworkListCache] : null
@@ -239,23 +230,49 @@ export async function updateArtwork(
   }
 
   try {
-    const saved = await apiClient.updateArtwork(baseUrl, slug, updates)
-
-    // If slug changed on the server, move cache entry
-    if (saved.slug !== slug) {
-      artworkDetailCache.delete(slug)
+    // Direct Supabase update
+    const payload: Record<string, unknown> = {}
+    if (updates.title !== undefined) payload.title = updates.title
+    if (updates.description !== undefined) payload.description = updates.description
+    if (updates.clay !== undefined) payload.clay = updates.clay
+    if (updates.cone !== undefined) {
+      // Normalize cone to string format for DB
+      payload.cone = typeof updates.cone === 'number'
+        ? `cone ${updates.cone}`
+        : updates.cone
     }
-    artworkDetailCache.set(saved.slug, saved)
+    if (updates.isMicrowaveSafe !== undefined) payload.is_microwave_safe = updates.isMicrowaveSafe
+    if (updates.isPublished !== undefined) payload.is_published = updates.isPublished
 
-    // Sync list cache with returned title/slug
+    const { error } = await supabase
+      .from('artworks')
+      .update(payload)
+      .eq('slug', slug)
+
+    if (error) {
+      throw new Error(`Failed to update artwork: ${error.message}`)
+    }
+
+    // Fetch updated artwork with images
+    const updated = await getArtworkWithImages(slug)
+    if (!updated) {
+      throw new Error('Failed to fetch updated artwork')
+    }
+
+    // Clear cache to force refresh
+    artworkDetailCache.delete(slug)
+    artworkDetailCache.set(slug, updated)
+
+    // Update list cache
     if (artworkListCache) {
       artworkListCache = artworkListCache.map((item) => {
-        if (item.id !== saved.id) return item
-        return { ...item, title: saved.title, slug: saved.slug }
+        if (item.slug !== slug) return item
+        return { ...item, title: updated.title }
       })
     }
 
-    return saved
+    console.log('[artwork-service] Updated artwork:', slug)
+    return updated
   } catch (error) {
     // Rollback on failure
     if (prevDetail) artworkDetailCache.set(slug, prevDetail)
@@ -279,27 +296,20 @@ export async function deleteArtwork(slug: string): Promise<void> {
   artworkDetailCache.delete(slug)
 
   try {
-    const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-    if (baseUrl) {
-      // Use API backend if available
-      await apiClient.deleteArtwork(baseUrl, slug)
-    } else {
-      // Direct Supabase delete
-      // Note: artwork_images will be cascade deleted via FK, triggering S3 cleanup
-      const { data, error } = await supabase
-        .from('artworks')
-        .delete()
-        .eq('slug', slug)
-        .select('id')
+    // Note: artwork_images will be cascade deleted via FK
+    const { data, error } = await supabase
+      .from('artworks')
+      .delete()
+      .eq('slug', slug)
+      .select('id')
 
-      if (error) {
-        throw new Error(`Failed to delete artwork: ${error.message}`)
-      }
+    if (error) {
+      throw new Error(`Failed to delete artwork: ${error.message}`)
+    }
 
-      // RLS may silently block delete - check if anything was actually deleted
-      if (!data || data.length === 0) {
-        throw new Error('Delete failed: artwork not found or permission denied')
-      }
+    // RLS may silently block delete - check if anything was actually deleted
+    if (!data || data.length === 0) {
+      throw new Error('Delete failed: artwork not found or permission denied')
     }
 
     console.log(`[artwork-service] Deleted artwork: ${slug}`)
@@ -307,32 +317,6 @@ export async function deleteArtwork(slug: string): Promise<void> {
     // Rollback
     if (prevList) artworkListCache = prevList
     if (prevDetail) artworkDetailCache.set(slug, prevDetail)
-    throw error
-  }
-}
-
-export async function reorderArtworks(artworkIds: string[]): Promise<void> {
-  const baseUrl = import.meta.env.VITE_DATA_CONNECT_URL
-  if (!baseUrl) throw new Error('Reordering artworks requires artwork API backend')
-
-  // Snapshot for rollback
-  const prevList = artworkListCache ? [...artworkListCache] : null
-
-  // Optimistically update order in cache
-  if (artworkListCache) {
-    artworkListCache = artworkListCache.map((item, index) => ({
-      ...item,
-      sortOrder: artworkIds.indexOf(item.id) !== -1 ? artworkIds.indexOf(item.id) : index
-    }))
-  }
-
-  try {
-    // TODO:For now, we'll just update the cache since there's no backend reorder endpoint
-    // In a real implementation, you'd call a backend endpoint to update sortOrder
-    console.log('Reordered artworks:', artworkIds)
-  } catch (error) {
-    // Rollback on failure
-    if (prevList) artworkListCache = prevList
     throw error
   }
 }
@@ -499,6 +483,186 @@ function normalizeCone(
     return Number.isFinite(parsed) ? parsed : fallback
   }
   return fallback
+}
+
+// ============================================================================
+// Image Management
+// ============================================================================
+
+/**
+ * Input for updating an existing artwork image.
+ */
+export interface UpdateImageInput {
+  id: string
+  alt?: string
+  sortOrder?: number
+  isHero?: boolean
+}
+
+/**
+ * Input for adding a new image to an existing artwork.
+ */
+export interface AddImageInput {
+  cdnUrl: string
+  alt?: string
+  sortOrder: number
+  isHero: boolean
+}
+
+/**
+ * Update multiple images for an artwork (sort order, alt text, hero status).
+ */
+export async function updateArtworkImages(
+  artworkId: string,
+  updates: UpdateImageInput[]
+): Promise<void> {
+  await requireAdmin()
+
+  // Update each image
+  for (const update of updates) {
+    const payload: Record<string, unknown> = {}
+    if (update.alt !== undefined) payload.alt = update.alt
+    if (update.sortOrder !== undefined) payload.sort_order = update.sortOrder
+    if (update.isHero !== undefined) payload.is_hero = update.isHero
+
+    if (Object.keys(payload).length > 0) {
+      const { error } = await supabase
+        .from('artwork_images')
+        .update(payload)
+        .eq('id', update.id)
+        .eq('artwork_id', artworkId)
+
+      if (error) {
+        console.error('[artwork-service] Failed to update image:', error)
+        throw new Error(`Failed to update image: ${error.message}`)
+      }
+    }
+  }
+
+  // Invalidate cache
+  artworkDetailCache.clear()
+  console.log('[artwork-service] Updated images for artwork:', artworkId)
+}
+
+/**
+ * Delete an image from an artwork.
+ * Also cleans up the image from DO Spaces storage.
+ */
+export async function deleteArtworkImage(
+  artworkId: string,
+  imageId: string
+): Promise<void> {
+  await requireAdmin()
+
+  // First get the image URL for S3 cleanup
+  const { data: imageData } = await supabase
+    .from('artwork_images')
+    .select('image_url')
+    .eq('id', imageId)
+    .eq('artwork_id', artworkId)
+    .single()
+
+  const { error } = await supabase
+    .from('artwork_images')
+    .delete()
+    .eq('id', imageId)
+    .eq('artwork_id', artworkId)
+
+  if (error) {
+    console.error('[artwork-service] Failed to delete image:', error)
+    throw new Error(`Failed to delete image: ${error.message}`)
+  }
+
+  // Clean up from S3 storage
+  if (imageData?.image_url && isDoSpacesUrl(imageData.image_url)) {
+    try {
+      await deleteDoSpacesImage(imageData.image_url)
+    } catch (e) {
+      // Non-fatal: DB record is deleted, just log S3 cleanup failure
+      console.warn('[artwork-service] Failed to delete image from S3:', e)
+    }
+  }
+
+  // Invalidate cache
+  artworkDetailCache.clear()
+  console.log('[artwork-service] Deleted image:', imageId)
+}
+
+/**
+ * Add a new image to an existing artwork.
+ */
+export async function addArtworkImage(
+  artworkId: string,
+  image: AddImageInput
+): Promise<ArtworkImage> {
+  await requireAdmin()
+
+  const { data, error } = await supabase
+    .from('artwork_images')
+    .insert({
+      artwork_id: artworkId,
+      image_url: image.cdnUrl,
+      alt: image.alt || '',
+      sort_order: image.sortOrder,
+      is_hero: image.isHero
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('[artwork-service] Failed to add image:', error)
+    throw new Error(`Failed to add image: ${error.message}`)
+  }
+
+  // Invalidate cache
+  artworkDetailCache.clear()
+  console.log('[artwork-service] Added image to artwork:', artworkId)
+
+  return {
+    id: data.id,
+    artworkId: data.artwork_id,
+    imageUrl: data.image_url,
+    alt: data.alt,
+    sortOrder: data.sort_order,
+    isHero: data.is_hero,
+    createdAt: data.created_at
+  }
+}
+
+/**
+ * Batch save all image changes for an artwork.
+ * Handles updates, deletions, and new additions in one call.
+ */
+export async function saveArtworkImages(
+  artworkId: string,
+  changes: {
+    updates: UpdateImageInput[]
+    deletions: string[]
+    additions: AddImageInput[]
+  }
+): Promise<void> {
+  await requireAdmin()
+
+  // Process deletions first
+  for (const imageId of changes.deletions) {
+    await deleteArtworkImage(artworkId, imageId)
+  }
+
+  // Process updates
+  if (changes.updates.length > 0) {
+    await updateArtworkImages(artworkId, changes.updates)
+  }
+
+  // Process additions
+  for (const image of changes.additions) {
+    await addArtworkImage(artworkId, image)
+  }
+
+  // Invalidate caches
+  artworkDetailCache.clear()
+  artworkListCache = null
+
+  console.log('[artwork-service] Saved all image changes for artwork:', artworkId)
 }
 
 

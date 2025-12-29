@@ -1,7 +1,19 @@
 import { supabase } from '../supabase/client'
 import { BLOG_POSTS_TABLE } from '../supabase/constants'
-import { deleteImageByPublicUrl } from '../supabase/storage'
 import type { BlogPost } from '../types'
+import { deleteImage as deleteDoSpacesImage, isDoSpacesUrl } from './s3-upload'
+
+/**
+ * Delete a blog image from the appropriate storage backend.
+ * Handles both legacy Supabase Storage and new DO Spaces URLs.
+ */
+async function deleteBlogImage(imageUrl: string): Promise<void> {
+  if (isDoSpacesUrl(imageUrl)) {
+    await deleteDoSpacesImage(imageUrl)
+  } else {
+    console.error('Failed to delete blog image from storage', imageUrl)
+  }
+}
 
 export async function createBlogPost(
   post: Omit<BlogPost, 'id' | 'date'> & { date: string }
@@ -89,11 +101,25 @@ export async function deleteBlogPost(id: string): Promise<void> {
   if (error) throw error
   if (existing?.imageUrl) {
     try {
-      await deleteImageByPublicUrl(existing.imageUrl)
+      await deleteBlogImage(existing.imageUrl)
     } catch (e) {
       // Non-fatal: post is deleted, but log storage cleanup issue
       console.error('Failed to delete image from storage', e)
     }
+  }
+}
+
+/**
+ * Delete a blog post's old image when replacing it.
+ * Call this before updating the post with a new image URL.
+ */
+export async function deleteOldBlogImage(imageUrl: string | undefined): Promise<void> {
+  if (!imageUrl) return
+  try {
+    await deleteBlogImage(imageUrl)
+  } catch (e) {
+    // Non-fatal: log but don't block the update
+    console.error('Failed to delete old image from storage', e)
   }
 }
 
