@@ -2,11 +2,18 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 
+import {
+  ImageManagementSection,
+  artworkImagesToManaged,
+  type ManagedImage
+} from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   getArtworkWithImages,
-  updateArtwork
+  updateArtwork,
+  saveArtworkImages
 } from '../../services/artwork-service'
+import { uploadImage, isMockMode } from '../../services/s3-upload'
 import type { Artwork } from '../../types'
 
 const formSchema = z.object({
@@ -17,6 +24,41 @@ const formSchema = z.object({
   isMicrowaveSafe: z.boolean().default(true),
   isPublished: z.boolean().default(true)
 })
+
+const STYLES = {
+  container: 'min-h-screen py-8',
+  content: 'max-w-4xl mx-auto px-4',
+  header: 'flex justify-between items-center mb-6',
+  title: 'text-2xl font-medium',
+  backButton: 'px-4 py-2 rounded border hover:bg-gray-50',
+
+  form: 'space-y-6',
+  section: 'bg-white rounded-lg border p-6',
+  sectionTitle: 'text-lg font-medium mb-4',
+
+  fieldGroup: 'space-y-2',
+  label: 'block text-sm text-gray-600 mb-1',
+  input: 'w-full border rounded px-3 py-2',
+  textarea: 'w-full border rounded px-3 py-2',
+
+  checkboxGroup: 'flex items-center gap-6',
+  checkbox: 'inline-flex items-center gap-2',
+
+  actions: 'flex gap-3 pt-4 border-t',
+  submitButton: 'px-4 py-2 rounded bg-black text-white disabled:opacity-50',
+  cancelButton: 'px-4 py-2 rounded border',
+
+  error: 'mb-4 text-sm text-red-600',
+  loading: 'min-h-screen flex items-center justify-center',
+  loadingText: 'text-lg text-gray-600',
+
+  accessDenied: 'min-h-screen flex items-center justify-center',
+  accessDeniedTitle: 'text-lg text-red-600 mb-2',
+  accessDeniedText: 'text-sm text-gray-600',
+
+  mockWarning:
+    'mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800'
+} as const
 
 export default function EditArtwork() {
   const { slug } = useParams<{ slug: string }>()
@@ -32,8 +74,13 @@ export default function EditArtwork() {
     isMicrowaveSafe: true,
     isPublished: true
   })
+  const [images, setImages] = useState<ManagedImage[]>([])
+  const [originalImages, setOriginalImages] = useState<ManagedImage[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [uploadStatus, setUploadStatus] = useState<string>('')
+
+  const isUsingMockUpload = isMockMode()
 
   useEffect(() => {
     if (!slug) return
@@ -50,6 +97,9 @@ export default function EditArtwork() {
           isMicrowaveSafe: data.isMicrowaveSafe,
           isPublished: true
         })
+        const managedImages = artworkImagesToManaged(data.images)
+        setImages(managedImages)
+        setOriginalImages(managedImages)
       }
     })
     return () => {
@@ -70,20 +120,126 @@ export default function EditArtwork() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!slug) return
+    if (!slug || !artwork) return
     setError(null)
+
     const parsed = formSchema.safeParse(form)
     if (!parsed.success) {
       setError(parsed.error.errors[0]?.message ?? 'Invalid form')
       return
     }
+
+    // Validate at least one non-deleted image
+    const activeImages = images.filter((img) => !img.markedForDeletion)
+    if (activeImages.length === 0) {
+      setError('At least one image is required')
+      return
+    }
+
+    // Ensure exactly one hero
+    const heroCount = activeImages.filter((img) => img.isHero).length
+    if (heroCount === 0) {
+      // Auto-assign first image as hero
+      const firstActive = images.find((img) => !img.markedForDeletion)
+      if (firstActive) firstActive.isHero = true
+    }
+
     setSubmitting(true)
     try {
+      // Step 1: Update artwork metadata
+      setUploadStatus('Saving artwork details...')
       await updateArtwork(slug, parsed.data)
+
+      // Step 2: Calculate image changes
+      const deletions: string[] = []
+      const updates: {
+        id: string
+        alt?: string
+        sortOrder?: number
+        isHero?: boolean
+      }[] = []
+      const additions: {
+        cdnUrl: string
+        alt?: string
+        sortOrder: number
+        isHero: boolean
+      }[] = []
+
+      for (const img of images) {
+        if (img.markedForDeletion && !img.isNew) {
+          // Existing image marked for deletion
+          deletions.push(img.id)
+        } else if (img.isNew && !img.markedForDeletion) {
+          // New image to upload and add
+          additions.push({
+            cdnUrl: '', // Will be filled after upload
+            alt: img.alt,
+            sortOrder: img.sortOrder,
+            isHero: img.isHero
+          })
+        } else if (!img.isNew && !img.markedForDeletion) {
+          // Existing image - check for changes
+          const original = originalImages.find((o) => o.id === img.id)
+          if (original) {
+            const hasChanges =
+              original.alt !== img.alt ||
+              original.sortOrder !== img.sortOrder ||
+              original.isHero !== img.isHero
+
+            if (hasChanges) {
+              updates.push({
+                id: img.id,
+                alt: img.alt,
+                sortOrder: img.sortOrder,
+                isHero: img.isHero
+              })
+            }
+          }
+        }
+      }
+
+      // Step 3: Upload new images
+      const newImages = images.filter(
+        (img) => img.isNew && !img.markedForDeletion && img.file
+      )
+      if (newImages.length > 0) {
+        setUploadStatus(
+          `Uploading ${newImages.length} new image${newImages.length > 1 ? 's' : ''}...`
+        )
+
+        for (let i = 0; i < newImages.length; i++) {
+          const img = newImages[i]
+          if (!img.file) continue
+
+          setUploadStatus(`Uploading image ${i + 1} of ${newImages.length}...`)
+          const cdnUrl = await uploadImage(img.file)
+
+          // Find the corresponding addition and update its URL
+          const additionIndex = additions.findIndex(
+            (a) => a.sortOrder === img.sortOrder && a.alt === img.alt
+          )
+          if (additionIndex !== -1) {
+            additions[additionIndex].cdnUrl = cdnUrl
+          }
+        }
+      }
+
+      // Step 4: Save all image changes
+      if (deletions.length > 0 || updates.length > 0 || additions.length > 0) {
+        setUploadStatus('Saving image changes...')
+        await saveArtworkImages(artwork.id, {
+          updates,
+          deletions,
+          additions: additions.filter((a) => a.cdnUrl) // Only add images that were uploaded
+        })
+      }
+
+      setUploadStatus('')
       navigate(`/gallery/${slug}`)
     } catch (err) {
       console.error(err)
       setError('Failed to save changes')
+      setUploadStatus('')
     } finally {
       setSubmitting(false)
     }
@@ -91,18 +247,18 @@ export default function EditArtwork() {
 
   if (authLoading || adminLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading…</p>
+      <div className={STYLES.loading}>
+        <p className={STYLES.loadingText}>Loading…</p>
       </div>
     )
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={STYLES.accessDenied}>
         <div className="text-center">
-          <p className="text-lg text-red-600 mb-2">Access Denied</p>
-          <p className="text-sm text-gray-600">
+          <p className={STYLES.accessDeniedTitle}>Access Denied</p>
+          <p className={STYLES.accessDeniedText}>
             You must be an admin to edit artwork.
           </p>
         </div>
@@ -112,93 +268,139 @@ export default function EditArtwork() {
 
   if (!artwork) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading…</p>
+      <div className={STYLES.loading}>
+        <p className={STYLES.loadingText}>Loading…</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <h1 className="text-2xl font-medium mb-6">Edit Artwork</h1>
-        {error ? (
-          <div className="mb-4 text-sm text-red-600">{error}</div>
-        ) : null}
-        <form className="space-y-4" onSubmit={onSubmit}>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Title</label>
-            <input
-              name="title"
-              value={form.title}
-              onChange={onChange}
-              className="w-full border rounded px-3 py-2"
+    <div className={STYLES.container}>
+      <div className={STYLES.content}>
+        {/* Header */}
+        <div className={STYLES.header}>
+          <h1 className={STYLES.title}>Edit Artwork</h1>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className={STYLES.backButton}
+          >
+            Back
+          </button>
+        </div>
+
+        {error && <div className={STYLES.error}>{error}</div>}
+
+        <form className={STYLES.form} onSubmit={onSubmit}>
+          {/* Images Section */}
+          <div className={STYLES.section}>
+            <h2 className={STYLES.sectionTitle}>Images</h2>
+            {isUsingMockUpload && (
+              <div className={STYLES.mockWarning}>
+                <strong>Dev Mode:</strong> New images will use local blob URLs
+                (not persisted).
+              </div>
+            )}
+            <ImageManagementSection
+              images={images}
+              onImagesChange={setImages}
+              disabled={submitting}
             />
           </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={onChange}
-              className="w-full border rounded px-3 py-2"
-              rows={4}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Clay</label>
+
+          {/* Basic Information */}
+          <div className={STYLES.section}>
+            <h2 className={STYLES.sectionTitle}>Basic Information</h2>
+
+            <div className={STYLES.fieldGroup}>
+              <label className={STYLES.label}>Title</label>
               <input
-                name="clay"
-                value={form.clay ?? ''}
+                name="title"
+                value={form.title}
                 onChange={onChange}
-                className="w-full border rounded px-3 py-2"
+                className={STYLES.input}
+                disabled={submitting}
               />
             </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Cone</label>
-              <input
-                name="cone"
-                value={String(form.cone ?? '')}
+
+            <div className={STYLES.fieldGroup}>
+              <label className={STYLES.label}>Description</label>
+              <textarea
+                name="description"
+                value={form.description}
                 onChange={onChange}
-                className="w-full border rounded px-3 py-2"
+                className={STYLES.textarea}
+                rows={4}
+                disabled={submitting}
               />
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="isMicrowaveSafe"
-                checked={!!form.isMicrowaveSafe}
-                onChange={onChange}
-              />
-              <span>Microwave safe</span>
-            </label>
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="isPublished"
-                checked={!!form.isPublished}
-                onChange={onChange}
-              />
-              <span>Published</span>
-            </label>
+
+          {/* Technical Details */}
+          <div className={STYLES.section}>
+            <h2 className={STYLES.sectionTitle}>Technical Details</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className={STYLES.fieldGroup}>
+                <label className={STYLES.label}>Clay</label>
+                <input
+                  name="clay"
+                  value={form.clay ?? ''}
+                  onChange={onChange}
+                  className={STYLES.input}
+                  disabled={submitting}
+                />
+              </div>
+              <div className={STYLES.fieldGroup}>
+                <label className={STYLES.label}>Cone</label>
+                <input
+                  name="cone"
+                  value={String(form.cone ?? '')}
+                  onChange={onChange}
+                  className={STYLES.input}
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            <div className={STYLES.checkboxGroup}>
+              <label className={STYLES.checkbox}>
+                <input
+                  type="checkbox"
+                  name="isMicrowaveSafe"
+                  checked={!!form.isMicrowaveSafe}
+                  onChange={onChange}
+                  disabled={submitting}
+                />
+                <span>Microwave safe</span>
+              </label>
+              <label className={STYLES.checkbox}>
+                <input
+                  type="checkbox"
+                  name="isPublished"
+                  checked={!!form.isPublished}
+                  onChange={onChange}
+                  disabled={submitting}
+                />
+                <span>Published</span>
+              </label>
+            </div>
           </div>
-          <div className="flex gap-3 pt-2">
+
+          {/* Form Actions */}
+          <div className={STYLES.actions}>
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+              className={STYLES.submitButton}
             >
-              Save
+              {submitting ? uploadStatus || 'Saving...' : 'Save Changes'}
             </button>
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="px-4 py-2 rounded border"
+              className={STYLES.cancelButton}
+              disabled={submitting}
             >
               Cancel
             </button>

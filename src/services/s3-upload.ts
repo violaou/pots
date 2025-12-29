@@ -24,6 +24,9 @@ interface PresignResponse {
   key: string
 }
 
+// Allowed folder prefixes for uploads (must match edge function)
+export type AllowedFolder = 'artworks' | 'blog'
+
 interface UploadResult {
   cdnUrl: string
   key: string
@@ -69,10 +72,11 @@ function mockUpload(file: File): UploadResult {
  */
 async function getPresignedUrl(
   filename: string,
-  contentType: string
+  contentType: string,
+  folder: AllowedFolder = 'artworks'
 ): Promise<PresignResponse> {
   const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION_NAME, {
-    body: { filename, contentType }
+    body: { filename, contentType, folder }
   })
 
   if (error) {
@@ -109,9 +113,9 @@ async function uploadToS3(file: File, uploadUrl: string): Promise<void> {
 /**
  * Real upload implementation using presigned URLs.
  */
-async function realUpload(file: File): Promise<UploadResult> {
+async function realUpload(file: File, folder: AllowedFolder = 'artworks'): Promise<UploadResult> {
   // Get presigned URL
-  const { uploadUrl, cdnUrl, key } = await getPresignedUrl(file.name, file.type)
+  const { uploadUrl, cdnUrl, key } = await getPresignedUrl(file.name, file.type, folder)
 
   // Upload directly to S3
   await uploadToS3(file, uploadUrl)
@@ -131,10 +135,11 @@ async function realUpload(file: File): Promise<UploadResult> {
  * In production, uploads to DO Spaces and returns the CDN URL.
  *
  * @param file - The image file to upload
+ * @param folder - The folder prefix for the upload ('artworks' or 'blog'). Defaults to 'artworks'.
  * @returns The CDN URL of the uploaded image
  * @throws Error if upload fails
  */
-export async function uploadImage(file: File): Promise<string> {
+export async function uploadImage(file: File, folder: AllowedFolder = 'artworks'): Promise<string> {
   if (!file.type.startsWith('image/')) {
     throw new Error('Only image files are allowed')
   }
@@ -144,7 +149,7 @@ export async function uploadImage(file: File): Promise<string> {
     return result.cdnUrl
   }
 
-  const result = await realUpload(file)
+  const result = await realUpload(file, folder)
   return result.cdnUrl
 }
 
@@ -152,11 +157,12 @@ export async function uploadImage(file: File): Promise<string> {
  * Upload multiple images in parallel.
  *
  * @param files - Array of image files to upload
+ * @param folder - The folder prefix for the uploads ('artworks' or 'blog'). Defaults to 'artworks'.
  * @returns Array of CDN URLs in the same order as input files
  * @throws Error if any upload fails
  */
-export async function uploadImages(files: File[]): Promise<string[]> {
-  const results = await Promise.all(files.map(uploadImage))
+export async function uploadImages(files: File[], folder: AllowedFolder = 'artworks'): Promise<string[]> {
+  const results = await Promise.all(files.map(file => uploadImage(file, folder)))
   return results
 }
 
@@ -166,5 +172,70 @@ export async function uploadImages(files: File[]): Promise<string[]> {
  */
 export function isMockMode(): boolean {
   return shouldUseMockMode()
+}
+
+// ============================================================================
+// Deletion
+// ============================================================================
+
+const DELETE_EDGE_FUNCTION_NAME = 'delete-s3-image'
+
+/**
+ * Check if a URL is a DigitalOcean Spaces CDN URL.
+ */
+export function isDoSpacesUrl(url: string): boolean {
+  return url.includes('.digitaloceanspaces.com/')
+}
+
+/**
+ * Extract S3 key from a DO Spaces CDN URL.
+ * Example: https://pots.nyc3.cdn.digitaloceanspaces.com/blog/123-image.jpg
+ * Returns: blog/123-image.jpg
+ */
+export function extractKeyFromUrl(imageUrl: string): string | null {
+  try {
+    const url = new URL(imageUrl)
+    const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname
+    return key || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Delete an image from DigitalOcean Spaces.
+ *
+ * @param imageUrl - The CDN URL of the image to delete
+ * @throws Error if deletion fails
+ */
+export async function deleteImage(imageUrl: string): Promise<void> {
+  // Skip mock/blob URLs
+  if (imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
+    console.log('[s3-upload] Skipping deletion of mock URL')
+    return
+  }
+
+  // Skip non-DO Spaces URLs
+  if (!isDoSpacesUrl(imageUrl)) {
+    console.log('[s3-upload] Skipping deletion of non-DO Spaces URL:', imageUrl)
+    return
+  }
+
+  const key = extractKeyFromUrl(imageUrl)
+  if (!key) {
+    console.warn('[s3-upload] Could not extract key from URL:', imageUrl)
+    return
+  }
+
+  const { error } = await supabase.functions.invoke(DELETE_EDGE_FUNCTION_NAME, {
+    body: { key }
+  })
+
+  if (error) {
+    console.error('[s3-upload] Failed to delete image:', error)
+    throw new Error(`Failed to delete image: ${error.message}`)
+  }
+
+  console.log('[s3-upload] Successfully deleted:', key)
 }
 

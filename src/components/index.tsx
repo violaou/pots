@@ -5,6 +5,11 @@ export {
   default as ImageUploadSection,
   type ImagePreview
 } from './ImageUploadSection'
+export {
+  default as ImageManagementSection,
+  artworkImagesToManaged,
+  type ManagedImage
+} from './ImageManagementSection'
 export { default as Sidebar } from './Sidebar'
 export { TopBar } from './TopBar'
 export { UnderConstruction } from './UnderConstruction'

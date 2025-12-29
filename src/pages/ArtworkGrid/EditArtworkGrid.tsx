@@ -9,11 +9,7 @@ import {
   SpinnerIcon
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
-import {
-  deleteArtwork,
-  listArtworks,
-  reorderArtworks
-} from '../../services/artwork-service'
+import { deleteArtwork, listArtworks } from '../../services/artwork-service'
 import type { ArtworkListItem } from '../../types'
 
 // Styling constants
@@ -188,10 +184,7 @@ export default function EditArtworkGrid() {
       setDraggedItem(null)
       setDragOverItem(null)
 
-      // Save new order
-      reorderArtworks(updatedItems.map((item) => item.id)).catch((error) => {
-        console.error('Failed to reorder artworks:', error)
-      })
+      // Note: Reorder is UI-only for now (not persisted to database)
     },
     [draggedItem, items]
   )

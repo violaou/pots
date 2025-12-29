@@ -1,20 +1,15 @@
-import { LogOut } from 'lucide-react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Instagram, LogOut } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 
 import violaPotsLogo from '../assets/viola-pots.png'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth, useLogout } from '../contexts/AuthContext'
 import { getNavItems } from './TopBar'
 
 export default function Sidebar() {
   const location = useLocation()
-  const navigate = useNavigate()
-  const { isAuthenticated, logout } = useAuth()
-  const navItems = getNavItems(isAuthenticated)
-
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+  const { isAuthenticated } = useAuth()
+  const handleLogout = useLogout()
+  const navItems = getNavItems()
 
   return (
     <>
@@ -47,6 +42,15 @@ export default function Sidebar() {
               </Link>
             )
           })}
+          <a
+            href="https://www.instagram.com/viola.pots/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center space-x-2 text-gray-500 hover:text-gray-900 py-1"
+          >
+            <Instagram size={16} />
+            <span>Instagram</span>
+          </a>
           {isAuthenticated && (
             <button
               onClick={handleLogout}

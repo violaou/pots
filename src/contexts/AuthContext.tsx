@@ -2,10 +2,12 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useState
 } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import {
   isAdmin as sbIsAdmin,
@@ -166,4 +168,18 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
+}
+
+/**
+ * Hook that provides a logout function which also navigates to home.
+ * Use this instead of manually calling logout() and navigate('/').
+ */
+export function useLogout() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  return useCallback(() => {
+    logout()
+    navigate('/')
+  }, [logout, navigate])
 }

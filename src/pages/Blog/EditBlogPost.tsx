@@ -1,9 +1,13 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { useAuth } from '../../contexts/AuthContext'
-import { getBlogPost, updateBlogPost } from '../../services/blog-service'
-import { uploadImage } from '../../supabase/storage'
+import {
+  deleteOldBlogImage,
+  getBlogPost,
+  updateBlogPost
+} from '../../services/blog-service'
+import { uploadImage } from '../../services/s3-upload'
 import type { BlogPost } from '../../types'
 import { BackToBlog } from '../../components/BackToBlog'
 
@@ -60,7 +64,15 @@ export default function EditBlogPost() {
 
     try {
       let imageUrl = formData.imageUrl
-      if (imageFile) imageUrl = await uploadImage(imageFile)
+      const oldImageUrl = formData.imageUrl
+
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, 'blog')
+        // Delete old image if replacing
+        if (oldImageUrl && oldImageUrl !== imageUrl) {
+          await deleteOldBlogImage(oldImageUrl)
+        }
+      }
 
       await updateBlogPost(id, {
         title: formData.title,

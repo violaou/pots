@@ -1,32 +1,24 @@
-import { LogOut,Menu, X } from 'lucide-react'
-import React, { useEffect,useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Instagram, LogOut, Menu, X } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
 import violaPotsLogo from '../assets/viola-pots.png'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth, useLogout } from '../contexts/AuthContext'
 import { NavItem } from '../types'
 
-export const getNavItems = (isAuthenticated: boolean): NavItem[] => {
-  const items: NavItem[] = [
-    { path: '/gallery', label: 'Gallery' },
-    { path: '/blog', label: 'Blog' },
-    { path: '/about', label: 'About' },
-    { path: '/contact', label: 'Contact' }
-  ]
-
-  if (!isAuthenticated) {
-    items.push({ path: '/login', label: 'Login' })
-  }
-
-  return items
-}
+export const getNavItems = (): NavItem[] => [
+  { path: '/gallery', label: 'Gallery' },
+  { path: '/blog', label: 'Blog' },
+  { path: '/about', label: 'About' },
+  { path: '/contact', label: 'Contact' }
+]
 
 export const TopBar: React.FC = () => {
   const location = useLocation()
-  const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { isAuthenticated, logout } = useAuth()
-  const navItems = getNavItems(isAuthenticated)
+  const { isAuthenticated } = useAuth()
+  const handleLogout = useLogout()
+  const navItems = getNavItems()
 
   // Add/remove blur class to main content when menu opens/closes
   useEffect(() => {
@@ -45,11 +37,6 @@ export const TopBar: React.FC = () => {
       document.body.style.overflow = ''
     }
   }, [isMenuOpen])
-
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
 
   return (
     <>
@@ -141,6 +128,17 @@ export const TopBar: React.FC = () => {
                 </Link>
               )
             })}
+            {/* We use <a> as Instagram is an external site. */}
+            <a
+              href="https://www.instagram.com/viola.pots/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 py-1 text-gray-500 hover:text-gray-900"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Instagram size={16} />
+              <span>Instagram</span>
+            </a>
             {isAuthenticated && (
               <button
                 onClick={() => {

@@ -4,10 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   createBlogPost,
+  deleteOldBlogImage,
   getBlogPost,
   updateBlogPost
 } from '../../services/blog-service'
-import { uploadImage } from '../../supabase/storage'
+import { uploadImage } from '../../services/s3-upload'
 import type { BlogPost } from '../../types'
 import { BackToBlog } from '../../components/BackToBlog'
 
@@ -90,7 +91,15 @@ export default function BlogPostForm() {
 
     try {
       let imageUrl = formData.imageUrl
-      if (imageFile) imageUrl = await uploadImage(imageFile)
+      const oldImageUrl = formData.imageUrl
+
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, 'blog')
+        // Delete old image if replacing in edit mode
+        if (isEditMode && oldImageUrl && oldImageUrl !== imageUrl) {
+          await deleteOldBlogImage(oldImageUrl)
+        }
+      }
 
       const authorName = user?.displayName ?? 'Unknown Author'
 
