@@ -144,7 +144,7 @@ export default function BlogPostForm() {
       </h1>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
@@ -154,7 +154,7 @@ export default function BlogPostForm() {
           <span>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Title
             </label>
@@ -164,7 +164,7 @@ export default function BlogPostForm() {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 dark:bg-gray-900 text-black dark:text-gray-100"
               required
               disabled={saving}
             />
@@ -172,7 +172,7 @@ export default function BlogPostForm() {
           <span>
             <label
               htmlFor="content"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Content
             </label>
@@ -182,7 +182,7 @@ export default function BlogPostForm() {
               value={formData.content}
               onChange={handleChange}
               rows={10}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 dark:bg-gray-900 text-black dark:text-gray-100"
               required
               disabled={saving}
             />
@@ -191,7 +191,7 @@ export default function BlogPostForm() {
           <span>
             <label
               htmlFor="image"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Featured Image
             </label>
@@ -201,12 +201,13 @@ export default function BlogPostForm() {
               name="image"
               accept="image/*"
               onChange={handleImageChange}
-              className="mt-1 block w-full text-sm text-gray-500
+              className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-md file:border-0
                 file:text-sm file:font-semibold
                 file:bg-green-50 file:text-green-700
-                hover:file:bg-green-100"
+                dark:file:bg-green-900/30 dark:file:text-green-400
+                hover:file:bg-green-100 dark:hover:file:bg-green-900/50"
               disabled={saving}
             />
             {imagePreview && (
@@ -223,7 +224,7 @@ export default function BlogPostForm() {
           <span>
             <label
               htmlFor="tags"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Tags (comma-separated)
             </label>
@@ -233,7 +234,7 @@ export default function BlogPostForm() {
               name="tags"
               value={(formData.tags ?? []).join(', ')}
               onChange={handleTagsChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 dark:bg-gray-900 text-black dark:text-gray-100"
               disabled={saving}
             />
           </span>
@@ -245,7 +246,7 @@ export default function BlogPostForm() {
                 onClick={() =>
                   id ? navigate(`/blog/${id}`) : navigate('/blog')
                 }
-                className="bg-gray-200 text-black px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={saving}
               >
                 Cancel

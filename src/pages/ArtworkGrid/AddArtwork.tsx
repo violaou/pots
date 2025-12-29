@@ -31,39 +31,43 @@ const STYLES = {
   content: 'max-w-4xl mx-auto px-4',
   header: 'flex justify-between items-center mb-6',
   title: 'text-2xl font-medium',
-  subtitle: 'text-gray-600 mt-1',
-  backButton: 'px-4 py-2 rounded border hover:bg-gray-50',
+  subtitle: 'text-gray-600 dark:text-gray-400 mt-1',
+  backButton:
+    'px-4 py-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800',
 
   // Form styles
   form: 'space-y-6',
-  formSection: 'bg-white rounded-lg border p-6',
+  formSection:
+    'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6',
   sectionTitle: 'text-lg font-medium mb-4',
 
   // Form fields
   fieldGroup: 'space-y-2',
-  label: 'block text-sm font-medium text-gray-700',
+  label: 'block text-sm font-medium text-gray-700 dark:text-gray-300',
   input:
-    'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
   textarea:
-    'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical min-h-[100px]',
+    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical min-h-[100px]',
   select:
-    'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-  checkbox: 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded',
+    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+  checkbox:
+    'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded',
 
   // Form actions
-  formActions: 'flex justify-end space-x-4 pt-6 border-t',
+  formActions:
+    'flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700',
   submitButton:
     'px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed',
   cancelButton:
-    'px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500',
+    'px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500',
 
   // Error states
-  error: 'text-red-600 text-sm mt-1',
+  error: 'text-red-600 dark:text-red-400 text-sm mt-1',
   fieldError: 'border-red-500 focus:ring-red-500',
 
   // Access denied
   accessDenied: 'min-h-screen flex items-center justify-center',
-  accessDeniedText: 'text-lg text-gray-600'
+  accessDeniedText: 'text-lg text-gray-600 dark:text-gray-400'
 } as const
 
 export default function AddArtwork() {
@@ -190,10 +194,10 @@ export default function AddArtwork() {
           <div className={STYLES.formSection}>
             <h2 className={STYLES.sectionTitle}>Images</h2>
             {isUsingMockUpload && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
+              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md text-sm text-amber-800 dark:text-amber-200">
                 <strong>Dev Mode:</strong> Images will use local blob URLs (not
                 persisted). Set{' '}
-                <code className="bg-amber-100 px-1 rounded">
+                <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">
                   VITE_USE_REAL_UPLOAD=true
                 </code>{' '}
                 for real uploads.

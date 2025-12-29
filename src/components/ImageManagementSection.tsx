@@ -30,10 +30,10 @@ const STYLES = {
 
   // Upload area
   uploadArea:
-    'border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer',
-  uploadAreaActive: 'border-blue-500 bg-blue-50',
+    'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer',
+  uploadAreaActive: 'border-blue-500 bg-blue-50 dark:bg-blue-900/20',
   uploadAreaDisabled: 'opacity-50 cursor-not-allowed',
-  uploadText: 'text-gray-600 text-sm',
+  uploadText: 'text-gray-600 dark:text-gray-400 text-sm',
   uploadButton:
     'mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm',
   fileInput: 'hidden',
@@ -42,8 +42,9 @@ const STYLES = {
   imageGrid: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',
 
   // Image card
-  imageCard: 'relative group border rounded-lg overflow-hidden bg-white',
-  imageCardDeleted: 'opacity-40 border-red-300',
+  imageCard:
+    'relative group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800',
+  imageCardDeleted: 'opacity-40 border-red-300 dark:border-red-800',
   imageCardDragging: 'ring-2 ring-blue-500 shadow-lg',
   imageThumb: 'w-full h-32 object-cover',
 
@@ -61,7 +62,7 @@ const STYLES = {
   overlayActions:
     'opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col gap-2',
   actionButton:
-    'px-3 py-1 bg-white text-gray-800 rounded text-xs font-medium hover:bg-gray-100 shadow',
+    'px-3 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-700 shadow',
 
   // Remove button
   removeButton:
@@ -77,7 +78,7 @@ const STYLES = {
     'absolute bottom-2 right-2 text-white bg-black bg-opacity-50 rounded p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity',
 
   // Error
-  error: 'text-red-600 text-sm mt-2'
+  error: 'text-red-600 dark:text-red-400 text-sm mt-2'
 } as const
 
 /**

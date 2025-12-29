@@ -31,7 +31,7 @@ function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="aspect-square bg-gray-50">
+      <div className="aspect-square bg-gray-50 dark:bg-gray-800">
         <img
           src={hero.imageUrl}
           alt={hero.alt ?? ''}
@@ -41,7 +41,7 @@ function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
       {rest.length ? (
         <div className="grid grid-cols-2 gap-4">
           {rest.map((img) => (
-            <div key={img.id} className="aspect-square bg-gray-50">
+            <div key={img.id} className="aspect-square bg-gray-50 dark:bg-gray-800">
               <img
                 src={img.imageUrl}
                 alt={img.alt ?? ''}
@@ -92,7 +92,9 @@ export const ArtworkDetail = () => {
   if (!artwork) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Artwork not found</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400">
+          Artwork not found
+        </p>
       </div>
     )
   }
@@ -102,7 +104,7 @@ export const ArtworkDetail = () => {
       <div className="max-w-5xl mx-auto px-4">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
+          className="inline-flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mb-8"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back
@@ -113,43 +115,51 @@ export const ArtworkDetail = () => {
             <HeroAndRelatedImages images={artwork.images} />
           </div>
           <div className="space-y-6">
-            <h1 className="text-2xl font-medium text-gray-900">
+            <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">
               {artwork.title}
             </h1>
             {isAdmin ? (
               <div className="flex items-center gap-3">
                 <Link
                   to={`/gallery/${artwork.slug}/edit`}
-                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50"
+                  className="px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   Edit
                 </Link>
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50"
+                  className="px-3 py-1.5 rounded border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   Delete
                 </button>
               </div>
             ) : null}
             {artwork.description ? (
-              <p className="text-gray-600">{artwork.description}</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                {artwork.description}
+              </p>
             ) : null}
             <div className="space-y-4 pt-4">
               {artwork.materials ? (
-                <div className="flex justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-500">Materials</span>
+                <div className="flex justify-between py-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Materials
+                  </span>
                   <span>{artwork.materials}</span>
                 </div>
               ) : null}
               {typeof artwork.cone === 'number' ? (
-                <div className="flex justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-500">Firing Cone</span>
+                <div className="flex justify-between py-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Firing Cone
+                  </span>
                   <span>cone {artwork.cone}</span>
                 </div>
               ) : null}
-              <div className="flex justify-between py-2 border-t border-gray-100">
-                <span className="text-gray-500">Microwave Safe</span>
+              <div className="flex justify-between py-2 border-t border-gray-100 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400">
+                  Microwave Safe
+                </span>
                 <span>{artwork.isMicrowaveSafe ? 'Yes' : 'No'}</span>
               </div>
             </div>

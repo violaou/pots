@@ -30,34 +30,40 @@ const STYLES = {
   content: 'max-w-4xl mx-auto px-4',
   header: 'flex justify-between items-center mb-6',
   title: 'text-2xl font-medium',
-  backButton: 'px-4 py-2 rounded border hover:bg-gray-50',
+  backButton:
+    'px-4 py-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800',
 
   form: 'space-y-6',
-  section: 'bg-white rounded-lg border p-6',
+  section:
+    'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6',
   sectionTitle: 'text-lg font-medium mb-4',
 
   fieldGroup: 'space-y-2',
-  label: 'block text-sm text-gray-600 mb-1',
-  input: 'w-full border rounded px-3 py-2',
-  textarea: 'w-full border rounded px-3 py-2',
+  label: 'block text-sm text-gray-600 dark:text-gray-400 mb-1',
+  input:
+    'w-full border border-gray-200 dark:border-gray-700 rounded px-3 py-2 bg-white dark:bg-gray-900 dark:text-gray-100',
+  textarea:
+    'w-full border border-gray-200 dark:border-gray-700 rounded px-3 py-2 bg-white dark:bg-gray-900 dark:text-gray-100',
 
   checkboxGroup: 'flex items-center gap-6',
   checkbox: 'inline-flex items-center gap-2',
 
-  actions: 'flex gap-3 pt-4 border-t',
-  submitButton: 'px-4 py-2 rounded bg-black text-white disabled:opacity-50',
-  cancelButton: 'px-4 py-2 rounded border',
+  actions: 'flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700',
+  submitButton:
+    'px-4 py-2 rounded bg-black dark:bg-white text-white dark:text-black disabled:opacity-50',
+  cancelButton:
+    'px-4 py-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800',
 
-  error: 'mb-4 text-sm text-red-600',
+  error: 'mb-4 text-sm text-red-600 dark:text-red-400',
   loading: 'min-h-screen flex items-center justify-center',
-  loadingText: 'text-lg text-gray-600',
+  loadingText: 'text-lg text-gray-600 dark:text-gray-400',
 
   accessDenied: 'min-h-screen flex items-center justify-center',
-  accessDeniedTitle: 'text-lg text-red-600 mb-2',
-  accessDeniedText: 'text-sm text-gray-600',
+  accessDeniedTitle: 'text-lg text-red-600 dark:text-red-400 mb-2',
+  accessDeniedText: 'text-sm text-gray-600 dark:text-gray-400',
 
   mockWarning:
-    'mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800'
+    'mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md text-sm text-amber-800 dark:text-amber-200'
 } as const
 
 export default function EditArtwork() {

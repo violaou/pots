@@ -18,13 +18,14 @@ const STYLES = {
   content: 'max-w-6xl mx-auto px-4',
   header: 'flex justify-between items-center mb-6',
   title: 'text-2xl font-medium',
-  subtitle: 'text-gray-600 mt-1',
-  backButton: 'px-4 py-2 rounded border hover:bg-gray-50',
+  subtitle: 'text-gray-600 dark:text-gray-400 mt-1',
+  backButton:
+    'px-4 py-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800',
   grid: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',
 
   // Artwork card states
   cardBase:
-    'relative group border rounded-lg overflow-hidden cursor-move transition-all duration-200',
+    'relative group border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg overflow-hidden cursor-move transition-all duration-200',
   cardDragging: 'opacity-30 scale-95 rotate-2 shadow-2xl z-10',
   cardDropTarget: 'ring-2 ring-blue-500 ring-opacity-50 scale-105 shadow-xl',
   cardHover: 'hover:shadow-lg hover:scale-105',
@@ -62,11 +63,11 @@ const STYLES = {
 
   // Empty state
   emptyState: 'text-center py-12',
-  emptyText: 'text-gray-500',
+  emptyText: 'text-gray-500 dark:text-gray-400',
 
   // Access denied
   accessDenied: 'min-h-screen flex items-center justify-center',
-  accessDeniedText: 'text-lg text-gray-600'
+  accessDeniedText: 'text-lg text-gray-600 dark:text-gray-400'
 } as const
 
 // Drag image configuration
