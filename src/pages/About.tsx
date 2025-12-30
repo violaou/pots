@@ -2,18 +2,18 @@ import { Link } from 'react-router-dom'
 import violaPotsLogo from '../assets/viola-pots.png'
 import { theme } from '../styles/theme'
 
-export const About = () => {
+export function About() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
+    <div className={theme.layout.container}>
       <h1 className={`text-3xl font-bold mb-8 ${theme.text.h1}`}>
         About the Artist
       </h1>
 
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <div className="md:col-span-1">
-          <div className="aspect-square rounded-lg overflow-hidden">
+          <div className={`${theme.image.square} rounded-lg`}>
             {/* TODO: I need a headshot */}
-            <div className="w-full h-full flex items-center justify-center p-2 ">
+            <div className="w-full h-full flex items-center justify-center p-2">
               <img src={violaPotsLogo} alt="Viola Pots" />
             </div>
           </div>
@@ -35,10 +35,9 @@ export const About = () => {
             functional design. I believe in creating pieces that invite touch
             and effortlessly fit into the flow of daily life.
           </p>
-          {/* button to gallery */}
           <Link
             to="/gallery"
-            className="mt-6 inline-block bg-blue-500 text-white px-4 py-2 rounded-md"
+            className={`mt-6 inline-block ${theme.button.accent}`}
           >
             View Gallery
           </Link>

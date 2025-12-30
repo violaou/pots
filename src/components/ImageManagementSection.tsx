@@ -43,7 +43,7 @@ const STYLES = {
 
   // Image card
   imageCard:
-    'relative group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800',
+    'relative group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-neutral-800',
   imageCardDeleted: 'opacity-40 border-red-300 dark:border-red-800',
   imageCardDragging: 'ring-2 ring-blue-500 shadow-lg',
   imageThumb: 'w-full h-32 object-cover',
@@ -62,7 +62,7 @@ const STYLES = {
   overlayActions:
     'opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col gap-2',
   actionButton:
-    'px-3 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-700 shadow',
+    'px-3 py-1 bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 rounded text-xs font-medium hover:bg-gray-100 dark:hover:bg-neutral-700 shadow',
 
   // Remove button
   removeButton:

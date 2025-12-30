@@ -23,16 +23,5 @@ export default {
       }
     }
   },
-  plugins: [],
-  corePlugins: {
-    textColor: true
-  },
-  important: true,
-  theme: {
-    extend: {
-      textColor: {
-        DEFAULT: '#000000'
-      }
-    }
-  }
+  plugins: []
 }
