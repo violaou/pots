@@ -72,10 +72,9 @@ export default function BlogPostPage() {
           <button
             onClick={async () => {
               if (!id) return
-              const confirmed = window.confirm(
-                'Delete this post? This cannot be undone.'
-              )
-              if (!confirmed) return
+              if (!window.confirm('Delete this post? This cannot be undone.'))
+                return
+
               try {
                 await deleteBlogPost(id)
                 navigate('/blog')

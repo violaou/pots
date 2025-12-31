@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { useAuth } from '../../contexts/AuthContext'
@@ -25,7 +25,7 @@ const fileInputStyles = `mt-1 block w-full text-sm ${theme.text.muted}
 export default function BlogPostForm() {
   const navigate = useNavigate()
   const { id } = useParams()
-  const isEditMode = useMemo(() => Boolean(id), [id])
+  const isEditMode = Boolean(id)
   const { user } = useAuth()
 
   const [formData, setFormData] = useState<Omit<BlogPost, 'id'>>({
@@ -35,7 +35,7 @@ export default function BlogPostForm() {
     date: new Date().toISOString().split('T')[0],
     tags: []
   })
-  const [loading, setLoading] = useState<boolean>(Boolean(isEditMode))
+  const [loading, setLoading] = useState(isEditMode)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -246,13 +246,8 @@ export default function BlogPostForm() {
               className={theme.button.accent}
               disabled={saving}
             >
-              {saving
-                ? isEditMode
-                  ? 'Saving...'
-                  : 'Creating...'
-                : isEditMode
-                  ? 'Save Changes'
-                  : 'Create Post'}
+              {saving && (isEditMode ? 'Saving...' : 'Creating...')}
+              {!saving && (isEditMode ? 'Save Changes' : 'Create Post')}
             </button>
           </div>
         </div>

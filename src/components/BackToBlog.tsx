@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom'
 
+import { theme } from '../styles/theme'
+
 export const BackToBlog = (
-  <Link
-    to="/blog"
-    className="text-green-600 hover:text-green-800 mb-4 inline-block"
-  >
+  <Link to="/blog" className={`${theme.backLink} mb-4 inline-block`}>
     ← Back to Blog
   </Link>
 )

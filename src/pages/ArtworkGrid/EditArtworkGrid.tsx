@@ -1,6 +1,6 @@
+import type { DragEvent } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { DragEvent } from 'react'
 
 import {
   ConfirmationModal,
@@ -9,16 +9,23 @@ import {
   SpinnerIcon
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
-import { deleteArtwork, listArtworks } from '../../services/artwork-service'
+import {
+  deleteArtwork,
+  listAllArtworks,
+  updateArtwork
+} from '../../services/artwork-service/index'
 import { theme } from '../../styles/theme'
 import type { ArtworkListItem } from '../../types'
 
 // Drag-specific styles (unique to this component)
 const dragStyles = {
   cardBase: `relative group border ${theme.border.default} ${theme.bg.card} rounded-lg overflow-hidden cursor-move transition-all duration-200`,
+  cardUnpublished: 'ring-2 ring-yellow-500 ring-offset-2 ring-offset-stone-900',
   cardDragging: 'opacity-30 scale-95 rotate-2 shadow-2xl z-10',
   cardDropTarget: 'ring-2 ring-blue-500 ring-opacity-50 scale-105 shadow-xl',
   cardHover: 'hover:shadow-lg hover:scale-105',
+  unpublishedBadge:
+    'absolute top-2 left-2 bg-yellow-500 text-black px-2 py-0.5 rounded text-xs font-medium z-10',
   dragHandle:
     'absolute bottom-2 right-2 bg-black bg-opacity-75 text-white p-1 rounded transition-all duration-200',
   dragHandleVisible: 'opacity-100 scale-110',
@@ -28,7 +35,10 @@ const dragStyles = {
   dropBadge:
     'bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium',
   editButton:
-    'absolute top-2 right-10 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-90'
+    'absolute top-2 right-10 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-90',
+  hideButton:
+    'absolute top-2 right-20 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-yellow-400',
+  cardTitle: `font-medium text-sm truncate ${theme.text.h1}`
 } as const
 
 const DRAG_IMAGE_CONFIG = {
@@ -50,25 +60,38 @@ export default function EditArtworkGrid() {
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOverItem, setDragOverItem] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [artworkToDelete, setArtworkToDelete] =
     useState<ArtworkListItem | null>(null)
-  const { isAdmin } = useAuth()
+  const [loadingArtworks, setLoadingArtworks] = useState(true)
+  const { isAdmin, loading: authLoading, adminLoading } = useAuth()
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching
+    if (authLoading || adminLoading) return
+    if (!isAdmin) return
+
     let isMounted = true
-    listArtworks().then((data) => {
-      if (isMounted) {
-        const sortedData = [...data].sort(
-          (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
-        )
-        setItems(sortedData)
-      }
-    })
+    setLoadingArtworks(true)
+
+    listAllArtworks()
+      .then((data) => {
+        if (isMounted) {
+          setItems(data)
+        }
+      })
+      .catch((err) => {
+        console.error('[EditArtworkGrid] Failed to load artworks:', err)
+      })
+      .finally(() => {
+        if (isMounted) setLoadingArtworks(false)
+      })
+
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [authLoading, adminLoading, isAdmin])
 
   // Drag and drop handlers
   const handleDragStart = useCallback((e: DragEvent, itemId: string) => {
@@ -168,20 +191,63 @@ export default function EditArtworkGrid() {
     setArtworkToDelete(null)
   }, [])
 
+  const handleToggleVisibility = useCallback(
+    async (artwork: ArtworkListItem) => {
+      setTogglingId(artwork.id)
+      try {
+        const newPublished = !artwork.isPublished
+        await updateArtwork(artwork.slug, { isPublished: newPublished })
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === artwork.id
+              ? { ...item, isPublished: newPublished }
+              : item
+          )
+        )
+      } catch (error) {
+        console.error('Failed to toggle visibility:', error)
+        alert('Failed to update artwork visibility. Please try again.')
+      } finally {
+        setTogglingId(null)
+      }
+    },
+    []
+  )
+
   const getCardClassName = (artwork: ArtworkListItem) => {
-    if (draggedItem === artwork.id)
-      return `${dragStyles.cardBase} ${dragStyles.cardDragging}`
-    if (dragOverItem === artwork.id && draggedItem !== artwork.id)
-      return `${dragStyles.cardBase} ${dragStyles.cardDropTarget}`
-    return `${dragStyles.cardBase} ${dragStyles.cardHover}`
+    const isDragging = draggedItem === artwork.id
+    const isDropTarget = dragOverItem === artwork.id && !isDragging
+
+    const stateClass = isDragging
+      ? dragStyles.cardDragging
+      : isDropTarget
+        ? dragStyles.cardDropTarget
+        : dragStyles.cardHover
+
+    const classes = [
+      dragStyles.cardBase,
+      stateClass,
+      !artwork.isPublished && dragStyles.cardUnpublished
+    ]
+
+    return classes.filter(Boolean).join(' ')
   }
 
-  const getDragHandleClassName = (artwork: ArtworkListItem) => {
-    const visibilityClass =
-      draggedItem === artwork.id
-        ? dragStyles.dragHandleVisible
-        : dragStyles.dragHandleHidden
-    return `${dragStyles.dragHandle} ${visibilityClass}`
+  const getDragHandleClassName = (artworkId: string) => {
+    const isDragging = draggedItem === artworkId
+    const classes = [
+      dragStyles.dragHandle,
+      isDragging ? dragStyles.dragHandleVisible : dragStyles.dragHandleHidden
+    ]
+    return classes.join(' ')
+  }
+
+  if (authLoading || adminLoading || loadingArtworks) {
+    return (
+      <div className={theme.layout.pageCenter}>
+        <p className={theme.text.muted}>Loading...</p>
+      </div>
+    )
   }
 
   if (!isAdmin) {
@@ -217,65 +283,83 @@ export default function EditArtworkGrid() {
         </div>
 
         <div className={theme.grid.manage}>
-          {items.map((artwork, index) => (
-            <div
-              key={artwork.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, artwork.id)}
-              onDragOver={(e) => handleDragOver(e, artwork.id)}
-              onDragLeave={handleDragLeave}
-              onDragEnd={handleDragEnd}
-              onDrop={(e) => handleDrop(e, artwork.id)}
-              className={getCardClassName(artwork)}
-            >
-              <div className={theme.image.square}>
-                <img
-                  src={artwork.heroImageUrl}
-                  alt={artwork.title}
-                  className={theme.image.cover}
-                />
-              </div>
+          {items.map((artwork, index) => {
+            const isToggling = togglingId === artwork.id
+            const isDeleting = deletingId === artwork.id
+            const isDropTarget =
+              dragOverItem === artwork.id && draggedItem !== artwork.id
 
-              <div className={theme.overlay.badge}>#{index + 1}</div>
-
-              <Link
-                to={`/gallery/${artwork.slug}/edit`}
-                className={dragStyles.editButton}
-                onClick={(e) => e.stopPropagation()}
+            return (
+              <div
+                key={artwork.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, artwork.id)}
+                onDragOver={(e) => handleDragOver(e, artwork.id)}
+                onDragLeave={handleDragLeave}
+                onDragEnd={handleDragEnd}
+                onDrop={(e) => handleDrop(e, artwork.id)}
+                className={getCardClassName(artwork)}
               >
-                Edit
-              </Link>
-
-              <button
-                onClick={() => handleDeleteClick(artwork)}
-                disabled={deletingId === artwork.id}
-                className={theme.overlay.deleteButton}
-                title="Delete artwork"
-              >
-                {deletingId === artwork.id ? (
-                  <SpinnerIcon className="w-4 h-4 animate-spin" />
-                ) : (
-                  <DeleteIcon className="w-4 h-4" />
-                )}
-              </button>
-
-              <div className={getDragHandleClassName(artwork)}>
-                <DragIcon className="w-4 h-4" />
-              </div>
-
-              {dragOverItem === artwork.id && draggedItem !== artwork.id && (
-                <div className={dragStyles.dropZone}>
-                  <div className={dragStyles.dropBadge}>Drop here</div>
+                <div className={theme.image.square}>
+                  <img
+                    src={artwork.heroImageUrl}
+                    alt={artwork.title}
+                    className={theme.image.cover}
+                  />
                 </div>
-              )}
 
-              <div className="p-3">
-                <h3 className={`font-medium text-sm truncate ${theme.text.h1}`}>
-                  {artwork.title}
-                </h3>
+                {!artwork.isPublished && (
+                  <div className={dragStyles.unpublishedBadge}>Hidden</div>
+                )}
+
+                <div className={theme.overlay.badge}>#{index + 1}</div>
+
+                <button
+                  onClick={() => handleToggleVisibility(artwork)}
+                  disabled={isToggling}
+                  className={dragStyles.hideButton}
+                  title={
+                    artwork.isPublished
+                      ? 'Hide from gallery'
+                      : 'Show in gallery'
+                  }
+                >
+                  {isToggling ? '...' : artwork.isPublished ? 'Hide' : 'Show'}
+                </button>
+
+                <Link
+                  to={`/gallery/${artwork.slug}/edit`}
+                  className={dragStyles.editButton}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Edit
+                </Link>
+
+                <button
+                  onClick={() => handleDeleteClick(artwork)}
+                  disabled={isDeleting}
+                  className={theme.overlay.deleteButton}
+                  title="Delete artwork"
+                >
+                  {isDeleting ? <SpinnerIcon /> : <DeleteIcon />}
+                </button>
+
+                <div className={getDragHandleClassName(artwork.id)}>
+                  <DragIcon />
+                </div>
+
+                {isDropTarget && (
+                  <div className={dragStyles.dropZone}>
+                    <div className={dragStyles.dropBadge}>Drop here</div>
+                  </div>
+                )}
+
+                <div className="p-3">
+                  <h3 className={dragStyles.cardTitle}>{artwork.title}</h3>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {items.length === 0 && (

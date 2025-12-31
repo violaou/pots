@@ -11,28 +11,6 @@ export async function sendMagicLink(email: string): Promise<void> {
   if (error) throw error
 }
 
-export async function signInWithPassword(
-  email: string,
-  password: string
-): Promise<void> {
-  if (!email || !password) throw new Error('Email and password are required')
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw error
-}
-
-export async function signUpWithEmail(
-  email: string,
-  password: string
-): Promise<void> {
-  if (!email || !password) throw new Error('Email and password are required')
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: window.location.origin }
-  })
-  if (error) throw error
-}
-
 export async function logout(): Promise<void> {
   const { error } = await supabase.auth.signOut()
   if (error) throw error

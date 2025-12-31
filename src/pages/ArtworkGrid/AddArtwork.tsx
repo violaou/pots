@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 import { ImageUploadSection, type ImagePreview } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
-import { createArtwork } from '../../services/artwork-service'
+import { createArtwork } from '../../services/artwork-service/index'
 import { uploadImage, isMockMode } from '../../services/s3-upload'
 import { theme } from '../../styles/theme'
 
@@ -69,7 +69,7 @@ export default function AddArtwork() {
   // Handle image changes
   const handleImagesChange = (newImages: ImagePreview[]) => {
     setImages(newImages)
-    if (newImages.length > 0 && imageError) setImageError('')
+    if (newImages.length > 0) setImageError('')
   }
 
   // Form submission
@@ -81,11 +81,12 @@ export default function AddArtwork() {
     }
 
     try {
-      // Step 1: Upload images to S3 (or mock in dev)
-      setUploadStatus('Uploading images...')
+      // Upload images to S3 (or mock in dev)
+      setUploadStatus(
+        `Uploading ${images.length} image${images.length > 1 ? 's' : ''}...`
+      )
       const uploadedImages = await Promise.all(
-        images.map(async (img, index) => {
-          setUploadStatus(`Uploading image ${index + 1} of ${images.length}...`)
+        images.map(async (img) => {
           const cdnUrl = await uploadImage(img.file)
           return {
             cdnUrl,
@@ -118,9 +119,9 @@ export default function AddArtwork() {
     } catch (error) {
       setUploadStatus('')
       console.error('Form submission error:', error)
-      const message =
-        error instanceof Error ? error.message : 'An error occurred'
-      alert(`Failed to add artwork: ${message}`)
+      alert(
+        `Failed to add artwork: ${error instanceof Error ? error.message : 'An error occurred'}`
+      )
     }
   }
 
@@ -178,7 +179,12 @@ export default function AddArtwork() {
                   id="title"
                   type="text"
                   {...register('title')}
-                  className={`${theme.form.input} ${errors.title ? theme.form.fieldError : ''}`}
+                  className={[
+                    theme.form.input,
+                    errors.title && theme.form.fieldError
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   placeholder="Enter artwork title"
                 />
                 {errors.title && (
