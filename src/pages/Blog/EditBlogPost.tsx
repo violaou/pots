@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { useAuth } from '../../contexts/AuthContext'
 import {
@@ -73,8 +73,8 @@ export default function EditBlogPost() {
     setError(null)
 
     try {
-      let imageUrl = formData.imageUrl
       const oldImageUrl = formData.imageUrl
+      let imageUrl = oldImageUrl
 
       if (imageFile) {
         imageUrl = await uploadImage(imageFile, 'blog')
@@ -167,7 +167,7 @@ export default function EditBlogPost() {
               name="author"
               value={formData.author}
               onChange={handleChange}
-              className={`${theme.form.input} opacity-60`}
+              className={[theme.form.input, 'opacity-60'].join(' ')}
               required
               disabled
               readOnly
@@ -222,7 +222,7 @@ export default function EditBlogPost() {
               type="text"
               id="tags"
               name="tags"
-              value={formData.tags?.join(', ')}
+              value={(formData.tags ?? []).join(', ')}
               onChange={handleTagsChange}
               className={theme.form.input}
               disabled={saving}
@@ -230,14 +230,18 @@ export default function EditBlogPost() {
           </div>
 
           <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => (id ? navigate(`/blog/${id}`) : navigate('/blog'))}
-              className={theme.button.ghost}
-              disabled={saving}
+            <Link
+              to={id ? `/blog/${id}` : '/blog'}
+              className={[
+                theme.button.ghost,
+                'inline-flex items-center justify-center'
+              ].join(' ')}
+              tabIndex={saving ? -1 : undefined}
+              aria-disabled={saving}
+              onClick={(e) => saving && e.preventDefault()}
             >
               Cancel
-            </button>
+            </Link>
             <button
               type="submit"
               className={theme.button.accent}

@@ -12,7 +12,7 @@ import {
   getArtworkWithImages,
   updateArtwork,
   saveArtworkImages
-} from '../../services/artwork-service'
+} from '../../services/artwork-service/index'
 import { uploadImage, isMockMode } from '../../services/s3-upload'
 import { theme } from '../../styles/theme'
 import type { Artwork } from '../../types'
@@ -59,9 +59,9 @@ export default function EditArtwork() {
           title: data.title,
           description: data.description ?? '',
           clay: data.clay ?? 'stoneware',
-          cone: (data.cone as any) ?? 'cone 6',
+          cone: data.cone ?? 'cone 6',
           isMicrowaveSafe: data.isMicrowaveSafe,
-          isPublished: true
+          isPublished: data.isPublished
         })
         const managedImages = artworkImagesToManaged(data.images)
         setImages(managedImages)
@@ -102,21 +102,22 @@ export default function EditArtwork() {
       return
     }
 
-    // Ensure exactly one hero
-    const heroCount = activeImages.filter((img) => img.isHero).length
-    if (heroCount === 0) {
-      // Auto-assign first image as hero
-      const firstActive = images.find((img) => !img.markedForDeletion)
-      if (firstActive) firstActive.isHero = true
+    // Ensure exactly one hero - auto-assign first active image if none
+    const hasHero = activeImages.some((img) => img.isHero)
+    if (!hasHero) {
+      const firstActiveIndex = images.findIndex((img) => !img.markedForDeletion)
+      if (firstActiveIndex !== -1) {
+        images[firstActiveIndex] = { ...images[firstActiveIndex], isHero: true }
+      }
     }
 
     setSubmitting(true)
     try {
-      // Step 1: Update artwork metadata
+      // Update artwork metadata
       setUploadStatus('Saving artwork details...')
       await updateArtwork(slug, parsed.data)
 
-      // Step 2: Calculate image changes
+      // Calculate image changes
       const deletions: string[] = []
       const updates: {
         id: string
@@ -132,39 +133,46 @@ export default function EditArtwork() {
       }[] = []
 
       for (const img of images) {
-        if (img.markedForDeletion && !img.isNew) {
-          // Existing image marked for deletion
+        // Skip new images marked for deletion (never saved)
+        if (img.isNew && img.markedForDeletion) continue
+
+        // Existing image marked for deletion
+        if (img.markedForDeletion) {
           deletions.push(img.id)
-        } else if (img.isNew && !img.markedForDeletion) {
-          // New image to upload and add
+          continue
+        }
+
+        // New image to upload
+        if (img.isNew) {
           additions.push({
-            cdnUrl: '', // Will be filled after upload
+            cdnUrl: '', // Filled after upload
             alt: img.alt,
             sortOrder: img.sortOrder,
             isHero: img.isHero
           })
-        } else if (!img.isNew && !img.markedForDeletion) {
-          // Existing image - check for changes
-          const original = originalImages.find((o) => o.id === img.id)
-          if (original) {
-            const hasChanges =
-              original.alt !== img.alt ||
-              original.sortOrder !== img.sortOrder ||
-              original.isHero !== img.isHero
+          continue
+        }
 
-            if (hasChanges) {
-              updates.push({
-                id: img.id,
-                alt: img.alt,
-                sortOrder: img.sortOrder,
-                isHero: img.isHero
-              })
-            }
-          }
+        // Existing image - check for changes
+        const original = originalImages.find((o) => o.id === img.id)
+        if (!original) continue
+
+        const hasChanges =
+          original.alt !== img.alt ||
+          original.sortOrder !== img.sortOrder ||
+          original.isHero !== img.isHero
+
+        if (hasChanges) {
+          updates.push({
+            id: img.id,
+            alt: img.alt,
+            sortOrder: img.sortOrder,
+            isHero: img.isHero
+          })
         }
       }
 
-      // Step 3: Upload new images
+      // Upload new images
       const newImages = images.filter(
         (img) => img.isNew && !img.markedForDeletion && img.file
       )
@@ -355,7 +363,7 @@ export default function EditArtwork() {
                   onChange={onChange}
                   disabled={submitting}
                 />
-                <span>Published</span>
+                <span>Public</span>
               </label>
             </div>
           </div>

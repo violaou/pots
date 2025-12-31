@@ -3,82 +3,79 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState
 } from 'react'
 
-type Theme = 'light' | 'dark'
+const THEME_LIGHT = 'light'
+const THEME_DARK = 'dark'
+const STORAGE_KEY = 'theme'
+
+type Theme = typeof THEME_LIGHT | typeof THEME_DARK
 
 interface ThemeContextValue {
   theme: Theme
+  isDark: boolean
   toggleTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
-const STORAGE_KEY = 'theme'
-
-function getSystemTheme(): Theme {
-  if (typeof window === 'undefined') return 'light'
+function getSystemIsDark(): boolean {
+  if (typeof window === 'undefined') return false
   return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
 }
 
-function getStoredTheme(): Theme | null {
+function getStoredIsDark(): boolean | null {
   if (typeof window === 'undefined') return null
   const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === 'light' || stored === 'dark') return stored
+  if (stored === THEME_DARK) return true
+  if (stored === THEME_LIGHT) return false
   return null
 }
 
-function applyTheme(theme: Theme) {
-  const root = document.documentElement
-  if (theme === 'dark') {
-    root.classList.add('dark')
-  } else {
-    root.classList.remove('dark')
-  }
+function applyTheme(isDark: boolean) {
+  document.documentElement.classList.toggle(THEME_DARK, isDark)
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first, then system preference
-    return getStoredTheme() ?? getSystemTheme()
-  })
+  const [isDark, setIsDark] = useState(
+    () => getStoredIsDark() ?? getSystemIsDark()
+  )
+
+  // Derive string theme from boolean
+  const theme: Theme = isDark ? THEME_DARK : THEME_LIGHT
 
   // Apply theme on mount and when it changes
   useEffect(() => {
-    applyTheme(theme)
-  }, [theme])
+    applyTheme(isDark)
+  }, [isDark])
 
   // Listen for system preference changes only if no stored preference
   useEffect(() => {
-    const storedTheme = getStoredTheme()
-    if (storedTheme) return // User has explicit preference, don't listen to system
+    if (getStoredIsDark() !== null) return // User has explicit preference
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    const handleChange = (e: MediaQueryListEvent) => {
-      const newTheme = e.matches ? 'dark' : 'light'
-      setTheme(newTheme)
-    }
+    const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches)
 
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light'
-      localStorage.setItem(STORAGE_KEY, next)
+    setIsDark((prev) => {
+      const next = !prev
+      localStorage.setItem(STORAGE_KEY, next ? THEME_DARK : THEME_LIGHT)
       return next
     })
   }, [])
 
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo(
+    () => ({ theme, isDark, toggleTheme }),
+    [theme, isDark, toggleTheme]
   )
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
 export function useTheme(): ThemeContextValue {

@@ -46,6 +46,7 @@ export interface Artwork {
   cone?: number
   altText?: string
   isMicrowaveSafe: boolean
+  isPublished: boolean
   createdAt: string
   updatedAt: string
   images: ArtworkImage[]
@@ -57,4 +58,5 @@ export interface ArtworkListItem {
   title: string
   heroImageUrl: string
   sortOrder?: number
+  isPublished?: boolean
 }

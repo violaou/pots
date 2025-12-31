@@ -13,9 +13,7 @@ import {
   isAdmin as sbIsAdmin,
   logout as sbLogout,
   onAuthStateChange as sbOnAuthStateChange,
-  sendMagicLink as sbSendMagicLink,
-  signInWithPassword as sbSignInWithPassword,
-  signUpWithEmail as sbSignUpWithEmail
+  sendMagicLink as sbSendMagicLink
 } from '../supabase/auth'
 
 interface User {
@@ -31,8 +29,6 @@ interface AuthContextType {
   isAdmin: boolean
   adminLoading: boolean
   sendMagicLink: (email: string) => Promise<void>
-  signInWithPassword: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   loading: boolean
 }
@@ -123,16 +119,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await sbSendMagicLink(email)
   }
 
-  const signInWithPassword = async (email: string, password: string) => {
-    if (isDevLoggedIn) return
-    await sbSignInWithPassword(email, password)
-  }
-
-  const signUpWithEmail = async (email: string, password: string) => {
-    if (isDevLoggedIn) return
-    await sbSignUpWithEmail(email, password)
-  }
-
   const logout = async () => {
     if (isDevLoggedIn) return
     try {
@@ -151,8 +137,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin,
         adminLoading,
         sendMagicLink,
-        signInWithPassword,
-        signUpWithEmail,
         logout,
         loading
       }}

@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import {
   deleteArtwork,
   getArtworkWithImages
-} from '../../services/artwork-service'
+} from '../../services/artwork-service/index'
 import { theme } from '../../styles/theme'
 import type { Artwork, ArtworkImage } from '../../types'
 
