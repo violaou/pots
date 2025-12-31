@@ -8,8 +8,8 @@ import { ImageUploadSection, type ImagePreview } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import { createArtwork } from '../../services/artwork-service'
 import { uploadImage, isMockMode } from '../../services/s3-upload'
+import { theme } from '../../styles/theme'
 
-// Form validation schema
 const artworkSchema = z.object({
   title: z
     .string()
@@ -24,47 +24,6 @@ const artworkSchema = z.object({
 })
 
 type ArtworkFormData = z.infer<typeof artworkSchema>
-
-// Styling constants
-const STYLES = {
-  container: 'min-h-screen py-8',
-  content: 'max-w-4xl mx-auto px-4',
-  header: 'flex justify-between items-center mb-6',
-  title: 'text-2xl font-medium',
-  subtitle: 'text-gray-600 mt-1',
-  backButton: 'px-4 py-2 rounded border hover:bg-gray-50',
-
-  // Form styles
-  form: 'space-y-6',
-  formSection: 'bg-white rounded-lg border p-6',
-  sectionTitle: 'text-lg font-medium mb-4',
-
-  // Form fields
-  fieldGroup: 'space-y-2',
-  label: 'block text-sm font-medium text-gray-700',
-  input:
-    'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-  textarea:
-    'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical min-h-[100px]',
-  select:
-    'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-  checkbox: 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded',
-
-  // Form actions
-  formActions: 'flex justify-end space-x-4 pt-6 border-t',
-  submitButton:
-    'px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed',
-  cancelButton:
-    'px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500',
-
-  // Error states
-  error: 'text-red-600 text-sm mt-1',
-  fieldError: 'border-red-500 focus:ring-red-500',
-
-  // Access denied
-  accessDenied: 'min-h-screen flex items-center justify-center',
-  accessDeniedText: 'text-lg text-gray-600'
-} as const
 
 export default function AddArtwork() {
   // Form state
@@ -99,8 +58,8 @@ export default function AddArtwork() {
   // Access control
   if (!isAdmin) {
     return (
-      <div className={STYLES.accessDenied}>
-        <p className={STYLES.accessDeniedText}>
+      <div className={theme.layout.pageCenter}>
+        <p className={theme.text.muted}>
           Access denied. Admin privileges required.
         </p>
       </div>
@@ -110,10 +69,7 @@ export default function AddArtwork() {
   // Handle image changes
   const handleImagesChange = (newImages: ImagePreview[]) => {
     setImages(newImages)
-    // Clear image error when images are added
-    if (newImages.length > 0 && imageError) {
-      setImageError('')
-    }
+    if (newImages.length > 0 && imageError) setImageError('')
   }
 
   // Form submission
@@ -169,31 +125,32 @@ export default function AddArtwork() {
   }
 
   return (
-    <div className={STYLES.container}>
-      <div className={STYLES.content}>
-        {/* Header */}
-        <div className={STYLES.header}>
+    <div className={theme.layout.page}>
+      <div className={theme.layout.container}>
+        <div className={theme.layout.header}>
           <div>
-            <h1 className={STYLES.title}>Add New Artwork</h1>
-            <p className={STYLES.subtitle}>
+            <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
+              Add New Artwork
+            </h1>
+            <p className={theme.text.muted}>
               Upload images and provide details about your artwork
             </p>
           </div>
-          <Link to="/gallery" className={STYLES.backButton}>
+          <Link to="/gallery" className={theme.button.secondary}>
             Back to Gallery
           </Link>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className={STYLES.form}>
-          {/* Images Section */}
-          <div className={STYLES.formSection}>
-            <h2 className={STYLES.sectionTitle}>Images</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className={theme.section}>
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Images
+            </h2>
             {isUsingMockUpload && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
+              <div className={`mb-4 ${theme.alert.warning}`}>
                 <strong>Dev Mode:</strong> Images will use local blob URLs (not
                 persisted). Set{' '}
-                <code className="bg-amber-100 px-1 rounded">
+                <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">
                   VITE_USE_REAL_UPLOAD=true
                 </code>{' '}
                 for real uploads.
@@ -207,128 +164,129 @@ export default function AddArtwork() {
           </div>
 
           {/* Basic Information */}
-          <div className={STYLES.formSection}>
-            <h2 className={STYLES.sectionTitle}>Basic Information</h2>
+          <div className={theme.section}>
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Basic Information
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={STYLES.fieldGroup}>
-                <label htmlFor="title" className={STYLES.label}>
+              <div className={theme.form.group}>
+                <label htmlFor="title" className={theme.form.labelRequired}>
                   Title *
                 </label>
                 <input
                   id="title"
                   type="text"
                   {...register('title')}
-                  className={`${STYLES.input} ${
-                    errors.title ? STYLES.fieldError : ''
-                  }`}
+                  className={`${theme.form.input} ${errors.title ? theme.form.fieldError : ''}`}
                   placeholder="Enter artwork title"
                 />
                 {errors.title && (
-                  <p className={STYLES.error}>{errors.title.message}</p>
+                  <p className={theme.form.error}>{errors.title.message}</p>
                 )}
               </div>
 
-              <div className={STYLES.fieldGroup}>
-                <label htmlFor="materials" className={STYLES.label}>
+              <div className={theme.form.group}>
+                <label htmlFor="materials" className={theme.form.labelRequired}>
                   Materials
                 </label>
                 <input
                   id="materials"
                   type="text"
                   {...register('materials')}
-                  className={STYLES.input}
+                  className={theme.form.input}
                   placeholder="e.g., Stoneware, Glaze"
                 />
               </div>
             </div>
 
-            <div className={STYLES.fieldGroup}>
-              <label htmlFor="description" className={STYLES.label}>
+            <div className={theme.form.group}>
+              <label htmlFor="description" className={theme.form.labelRequired}>
                 Description
               </label>
               <textarea
                 id="description"
                 {...register('description')}
-                className={STYLES.textarea}
+                className={theme.form.textarea}
                 placeholder="Describe your artwork..."
               />
             </div>
           </div>
 
-          {/* Technical Details */}
-          <div className={STYLES.formSection}>
-            <h2 className={STYLES.sectionTitle}>Technical Details</h2>
+          <div className={theme.section}>
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Technical Details
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={STYLES.fieldGroup}>
-                <label htmlFor="clay" className={STYLES.label}>
+              <div className={theme.form.group}>
+                <label htmlFor="clay" className={theme.form.labelRequired}>
                   Clay Type
                 </label>
                 <input
                   id="clay"
                   type="text"
                   {...register('clay')}
-                  className={STYLES.input}
+                  className={theme.form.input}
                   placeholder="e.g., Stoneware, Porcelain"
                 />
               </div>
 
-              <div className={STYLES.fieldGroup}>
-                <label htmlFor="cone" className={STYLES.label}>
+              <div className={theme.form.group}>
+                <label htmlFor="cone" className={theme.form.labelRequired}>
                   Firing Cone
                 </label>
                 <input
                   id="cone"
                   type="text"
                   {...register('cone')}
-                  className={STYLES.input}
+                  className={theme.form.input}
                   placeholder="e.g., 6, 10, 04"
                 />
               </div>
             </div>
 
-            <div className={STYLES.fieldGroup}>
+            <div className={theme.form.group}>
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   {...register('isMicrowaveSafe')}
-                  className={STYLES.checkbox}
+                  className={theme.form.checkbox}
                 />
-                <span className="ml-2 text-sm text-gray-700">
+                <span className={`ml-2 text-sm ${theme.text.body}`}>
                   Microwave safe
                 </span>
               </label>
             </div>
           </div>
 
-          {/* Accessibility */}
-          <div className={STYLES.formSection}>
-            <h2 className={STYLES.sectionTitle}>Accessibility</h2>
+          <div className={theme.section}>
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Accessibility
+            </h2>
 
-            <div className={STYLES.fieldGroup}>
-              <label htmlFor="altText" className={STYLES.label}>
+            <div className={theme.form.group}>
+              <label htmlFor="altText" className={theme.form.labelRequired}>
                 Alt Text
               </label>
               <input
                 id="altText"
                 type="text"
                 {...register('altText')}
-                className={STYLES.input}
+                className={theme.form.input}
                 placeholder="Describe the artwork for screen readers"
               />
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className={STYLES.formActions}>
-            <Link to="/gallery" className={STYLES.cancelButton}>
+          <div className="flex justify-end space-x-4 pt-6 border-t border-neutral-200 dark:border-neutral-700">
+            <Link to="/gallery" className={theme.button.secondary}>
               Cancel
             </Link>
             <button
               type="submit"
               disabled={isSubmitting}
-              className={STYLES.submitButton}
+              className={theme.button.accent}
             >
               {isSubmitting ? uploadStatus || 'Adding...' : 'Add Artwork'}
             </button>

@@ -14,6 +14,7 @@ import {
   saveArtworkImages
 } from '../../services/artwork-service'
 import { uploadImage, isMockMode } from '../../services/s3-upload'
+import { theme } from '../../styles/theme'
 import type { Artwork } from '../../types'
 
 const formSchema = z.object({
@@ -24,41 +25,6 @@ const formSchema = z.object({
   isMicrowaveSafe: z.boolean().default(true),
   isPublished: z.boolean().default(true)
 })
-
-const STYLES = {
-  container: 'min-h-screen py-8',
-  content: 'max-w-4xl mx-auto px-4',
-  header: 'flex justify-between items-center mb-6',
-  title: 'text-2xl font-medium',
-  backButton: 'px-4 py-2 rounded border hover:bg-gray-50',
-
-  form: 'space-y-6',
-  section: 'bg-white rounded-lg border p-6',
-  sectionTitle: 'text-lg font-medium mb-4',
-
-  fieldGroup: 'space-y-2',
-  label: 'block text-sm text-gray-600 mb-1',
-  input: 'w-full border rounded px-3 py-2',
-  textarea: 'w-full border rounded px-3 py-2',
-
-  checkboxGroup: 'flex items-center gap-6',
-  checkbox: 'inline-flex items-center gap-2',
-
-  actions: 'flex gap-3 pt-4 border-t',
-  submitButton: 'px-4 py-2 rounded bg-black text-white disabled:opacity-50',
-  cancelButton: 'px-4 py-2 rounded border',
-
-  error: 'mb-4 text-sm text-red-600',
-  loading: 'min-h-screen flex items-center justify-center',
-  loadingText: 'text-lg text-gray-600',
-
-  accessDenied: 'min-h-screen flex items-center justify-center',
-  accessDeniedTitle: 'text-lg text-red-600 mb-2',
-  accessDeniedText: 'text-sm text-gray-600',
-
-  mockWarning:
-    'mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800'
-} as const
 
 export default function EditArtwork() {
   const { slug } = useParams<{ slug: string }>()
@@ -247,18 +213,18 @@ export default function EditArtwork() {
 
   if (authLoading || adminLoading) {
     return (
-      <div className={STYLES.loading}>
-        <p className={STYLES.loadingText}>Loading…</p>
+      <div className={theme.state.loading}>
+        <p className={theme.state.loadingText}>Loading…</p>
       </div>
     )
   }
 
   if (!isAdmin) {
     return (
-      <div className={STYLES.accessDenied}>
+      <div className={theme.layout.pageCenter}>
         <div className="text-center">
-          <p className={STYLES.accessDeniedTitle}>Access Denied</p>
-          <p className={STYLES.accessDeniedText}>
+          <p className={`text-lg ${theme.text.error} mb-2`}>Access Denied</p>
+          <p className={`text-sm ${theme.text.muted}`}>
             You must be an admin to edit artwork.
           </p>
         </div>
@@ -268,35 +234,39 @@ export default function EditArtwork() {
 
   if (!artwork) {
     return (
-      <div className={STYLES.loading}>
-        <p className={STYLES.loadingText}>Loading…</p>
+      <div className={theme.state.loading}>
+        <p className={theme.state.loadingText}>Loading…</p>
       </div>
     )
   }
 
   return (
-    <div className={STYLES.container}>
-      <div className={STYLES.content}>
-        {/* Header */}
-        <div className={STYLES.header}>
-          <h1 className={STYLES.title}>Edit Artwork</h1>
+    <div className={theme.layout.page}>
+      <div className={theme.layout.container}>
+        <div className={theme.layout.header}>
+          <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
+            Edit Artwork
+          </h1>
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className={STYLES.backButton}
+            className={theme.button.secondary}
           >
             Back
           </button>
         </div>
 
-        {error && <div className={STYLES.error}>{error}</div>}
+        {error && (
+          <div className={`mb-4 text-sm ${theme.text.error}`}>{error}</div>
+        )}
 
-        <form className={STYLES.form} onSubmit={onSubmit}>
-          {/* Images Section */}
-          <div className={STYLES.section}>
-            <h2 className={STYLES.sectionTitle}>Images</h2>
+        <form className="space-y-6" onSubmit={onSubmit}>
+          <div className={theme.section}>
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Images
+            </h2>
             {isUsingMockUpload && (
-              <div className={STYLES.mockWarning}>
+              <div className={`mb-4 ${theme.alert.warning}`}>
                 <strong>Dev Mode:</strong> New images will use local blob URLs
                 (not persisted).
               </div>
@@ -308,28 +278,29 @@ export default function EditArtwork() {
             />
           </div>
 
-          {/* Basic Information */}
-          <div className={STYLES.section}>
-            <h2 className={STYLES.sectionTitle}>Basic Information</h2>
+          <div className={theme.section}>
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Basic Information
+            </h2>
 
-            <div className={STYLES.fieldGroup}>
-              <label className={STYLES.label}>Title</label>
+            <div className={theme.form.group}>
+              <label className={theme.form.label}>Title</label>
               <input
                 name="title"
                 value={form.title}
                 onChange={onChange}
-                className={STYLES.input}
+                className={theme.form.input}
                 disabled={submitting}
               />
             </div>
 
-            <div className={STYLES.fieldGroup}>
-              <label className={STYLES.label}>Description</label>
+            <div className={theme.form.group}>
+              <label className={theme.form.label}>Description</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={onChange}
-                className={STYLES.textarea}
+                className={theme.form.textarea}
                 rows={4}
                 disabled={submitting}
               />
@@ -337,34 +308,36 @@ export default function EditArtwork() {
           </div>
 
           {/* Technical Details */}
-          <div className={STYLES.section}>
-            <h2 className={STYLES.sectionTitle}>Technical Details</h2>
+          <div className={theme.section}>
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Technical Details
+            </h2>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className={STYLES.fieldGroup}>
-                <label className={STYLES.label}>Clay</label>
+              <div className={theme.form.group}>
+                <label className={theme.form.label}>Clay</label>
                 <input
                   name="clay"
                   value={form.clay ?? ''}
                   onChange={onChange}
-                  className={STYLES.input}
+                  className={theme.form.input}
                   disabled={submitting}
                 />
               </div>
-              <div className={STYLES.fieldGroup}>
-                <label className={STYLES.label}>Cone</label>
+              <div className={theme.form.group}>
+                <label className={theme.form.label}>Cone</label>
                 <input
                   name="cone"
                   value={String(form.cone ?? '')}
                   onChange={onChange}
-                  className={STYLES.input}
+                  className={theme.form.input}
                   disabled={submitting}
                 />
               </div>
             </div>
 
-            <div className={STYLES.checkboxGroup}>
-              <label className={STYLES.checkbox}>
+            <div className={theme.form.checkboxGroup}>
+              <label className={theme.form.checkboxLabel}>
                 <input
                   type="checkbox"
                   name="isMicrowaveSafe"
@@ -374,7 +347,7 @@ export default function EditArtwork() {
                 />
                 <span>Microwave safe</span>
               </label>
-              <label className={STYLES.checkbox}>
+              <label className={theme.form.checkboxLabel}>
                 <input
                   type="checkbox"
                   name="isPublished"
@@ -388,18 +361,18 @@ export default function EditArtwork() {
           </div>
 
           {/* Form Actions */}
-          <div className={STYLES.actions}>
+          <div className={theme.form.actions}>
             <button
               type="submit"
               disabled={submitting}
-              className={STYLES.submitButton}
+              className={theme.button.primary}
             >
               {submitting ? uploadStatus || 'Saving...' : 'Save Changes'}
             </button>
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className={STYLES.cancelButton}
+              className={theme.button.secondary}
               disabled={submitting}
             >
               Cancel

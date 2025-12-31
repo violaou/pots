@@ -10,66 +10,27 @@ import {
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import { deleteArtwork, listArtworks } from '../../services/artwork-service'
+import { theme } from '../../styles/theme'
 import type { ArtworkListItem } from '../../types'
 
-// Styling constants
-const STYLES = {
-  container: 'min-h-screen py-8',
-  content: 'max-w-6xl mx-auto px-4',
-  header: 'flex justify-between items-center mb-6',
-  title: 'text-2xl font-medium',
-  subtitle: 'text-gray-600 mt-1',
-  backButton: 'px-4 py-2 rounded border hover:bg-gray-50',
-  grid: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',
-
-  // Artwork card states
-  cardBase:
-    'relative group border rounded-lg overflow-hidden cursor-move transition-all duration-200',
+// Drag-specific styles (unique to this component)
+const dragStyles = {
+  cardBase: `relative group border ${theme.border.default} ${theme.bg.card} rounded-lg overflow-hidden cursor-move transition-all duration-200`,
   cardDragging: 'opacity-30 scale-95 rotate-2 shadow-2xl z-10',
   cardDropTarget: 'ring-2 ring-blue-500 ring-opacity-50 scale-105 shadow-xl',
   cardHover: 'hover:shadow-lg hover:scale-105',
-
-  // Image container
-  imageContainer: 'aspect-square overflow-hidden',
-  image: 'w-full h-full object-cover',
-
-  // Order indicator
-  orderBadge:
-    'absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded',
-
-  // Delete button
-  deleteButton:
-    'absolute top-2 right-2 bg-red-600 bg-opacity-90 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100 disabled:opacity-50',
-  deleteIcon: 'w-4 h-4',
-  spinnerIcon: 'w-4 h-4 animate-spin',
-
-  // Drag handle
   dragHandle:
     'absolute bottom-2 right-2 bg-black bg-opacity-75 text-white p-1 rounded transition-all duration-200',
   dragHandleVisible: 'opacity-100 scale-110',
   dragHandleHidden: 'opacity-0 group-hover:opacity-100',
-  dragIcon: 'w-4 h-4',
-
-  // Drop zone
   dropZone:
     'absolute inset-0 bg-blue-500 bg-opacity-20 border-2 border-blue-500 border-dashed rounded-lg flex items-center justify-center',
   dropBadge:
     'bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium',
-
-  // Card content
-  cardContent: 'p-3',
-  cardTitle: 'font-medium text-sm truncate',
-
-  // Empty state
-  emptyState: 'text-center py-12',
-  emptyText: 'text-gray-500',
-
-  // Access denied
-  accessDenied: 'min-h-screen flex items-center justify-center',
-  accessDeniedText: 'text-lg text-gray-600'
+  editButton:
+    'absolute top-2 right-10 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-90'
 } as const
 
-// Drag image configuration
 const DRAG_IMAGE_CONFIG = {
   size: '200px',
   offset: { x: 100, y: 100 },
@@ -94,16 +55,13 @@ export default function EditArtworkGrid() {
     useState<ArtworkListItem | null>(null)
   const { isAdmin } = useAuth()
 
-  // Load artworks on mount
   useEffect(() => {
     let isMounted = true
     listArtworks().then((data) => {
       if (isMounted) {
-        const sortedData = [...data].sort((a, b) => {
-          const aOrder = a.sortOrder ?? 0
-          const bOrder = b.sortOrder ?? 0
-          return aOrder - bOrder
-        })
+        const sortedData = [...data].sort(
+          (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+        )
         setItems(sortedData)
       }
     })
@@ -117,7 +75,6 @@ export default function EditArtworkGrid() {
     setDraggedItem(itemId)
     e.dataTransfer.effectAllowed = 'move'
 
-    // Create custom drag image
     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement
     Object.assign(dragImage.style, {
       ...DRAG_IMAGE_CONFIG.styles,
@@ -150,9 +107,7 @@ export default function EditArtworkGrid() {
     setDragOverItem(targetId)
   }, [])
 
-  const handleDragLeave = useCallback(() => {
-    setDragOverItem(null)
-  }, [])
+  const handleDragLeave = useCallback(() => setDragOverItem(null), [])
 
   const handleDragEnd = useCallback(() => {
     setDraggedItem(null)
@@ -179,17 +134,13 @@ export default function EditArtworkGrid() {
         ...item,
         sortOrder: index
       }))
-
       setItems(updatedItems)
       setDraggedItem(null)
       setDragOverItem(null)
-
-      // Note: Reorder is UI-only for now (not persisted to database)
     },
     [draggedItem, items]
   )
 
-  // Delete handlers
   const handleDeleteClick = useCallback((item: ArtworkListItem) => {
     setArtworkToDelete(item)
     setShowDeleteModal(true)
@@ -218,30 +169,25 @@ export default function EditArtworkGrid() {
   }, [])
 
   const getCardClassName = (artwork: ArtworkListItem) => {
-    const baseClass = STYLES.cardBase
-    if (draggedItem === artwork.id) {
-      return `${baseClass} ${STYLES.cardDragging}`
-    }
-    if (dragOverItem === artwork.id && draggedItem !== artwork.id) {
-      return `${baseClass} ${STYLES.cardDropTarget}`
-    }
-    return `${baseClass} ${STYLES.cardHover}`
+    if (draggedItem === artwork.id)
+      return `${dragStyles.cardBase} ${dragStyles.cardDragging}`
+    if (dragOverItem === artwork.id && draggedItem !== artwork.id)
+      return `${dragStyles.cardBase} ${dragStyles.cardDropTarget}`
+    return `${dragStyles.cardBase} ${dragStyles.cardHover}`
   }
 
   const getDragHandleClassName = (artwork: ArtworkListItem) => {
-    const baseClass = STYLES.dragHandle
     const visibilityClass =
       draggedItem === artwork.id
-        ? STYLES.dragHandleVisible
-        : STYLES.dragHandleHidden
-    return `${baseClass} ${visibilityClass}`
+        ? dragStyles.dragHandleVisible
+        : dragStyles.dragHandleHidden
+    return `${dragStyles.dragHandle} ${visibilityClass}`
   }
 
-  // Access control
   if (!isAdmin) {
     return (
-      <div className={STYLES.accessDenied}>
-        <p className={STYLES.accessDeniedText}>
+      <div className={theme.layout.pageCenter}>
+        <p className={theme.text.muted}>
           Access denied. Admin privileges required.
         </p>
       </div>
@@ -249,31 +195,28 @@ export default function EditArtworkGrid() {
   }
 
   return (
-    <div className={STYLES.container}>
-      <div className={STYLES.content}>
-        {/* Header */}
-        <div className={STYLES.header}>
+    <div className={theme.layout.page}>
+      <div className={theme.layout.containerFull}>
+        <div className={theme.layout.header}>
           <div>
-            <h1 className={STYLES.title}>Manage Artworks</h1>
-            <p className={STYLES.subtitle}>
+            <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
+              Manage Artworks
+            </h1>
+            <p className={theme.text.muted}>
               Drag to reorder • Click delete to remove
             </p>
           </div>
           <div className="flex space-x-2">
-            <Link
-              to="/gallery/add"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
+            <Link to="/gallery/add" className={theme.button.accent}>
               Add Artwork
             </Link>
-            <Link to="/gallery" className={STYLES.backButton}>
+            <Link to="/gallery" className={theme.button.secondary}>
               Back to Gallery
             </Link>
           </div>
         </div>
 
-        {/* Artwork Grid */}
-        <div className={STYLES.grid}>
+        <div className={theme.grid.manage}>
           {items.map((artwork, index) => (
             <div
               key={artwork.id}
@@ -285,61 +228,63 @@ export default function EditArtworkGrid() {
               onDrop={(e) => handleDrop(e, artwork.id)}
               className={getCardClassName(artwork)}
             >
-              {/* Image */}
-              <div className={STYLES.imageContainer}>
+              <div className={theme.image.square}>
                 <img
                   src={artwork.heroImageUrl}
                   alt={artwork.title}
-                  className={STYLES.image}
+                  className={theme.image.cover}
                 />
               </div>
 
-              {/* Order Badge */}
-              <div className={STYLES.orderBadge}>#{index + 1}</div>
+              <div className={theme.overlay.badge}>#{index + 1}</div>
 
-              {/* Delete Button */}
+              <Link
+                to={`/gallery/${artwork.slug}/edit`}
+                className={dragStyles.editButton}
+                onClick={(e) => e.stopPropagation()}
+              >
+                Edit
+              </Link>
+
               <button
                 onClick={() => handleDeleteClick(artwork)}
                 disabled={deletingId === artwork.id}
-                className={STYLES.deleteButton}
+                className={theme.overlay.deleteButton}
                 title="Delete artwork"
               >
                 {deletingId === artwork.id ? (
-                  <SpinnerIcon className={STYLES.spinnerIcon} />
+                  <SpinnerIcon className="w-4 h-4 animate-spin" />
                 ) : (
-                  <DeleteIcon className={STYLES.deleteIcon} />
+                  <DeleteIcon className="w-4 h-4" />
                 )}
               </button>
 
-              {/* Drag Handle */}
               <div className={getDragHandleClassName(artwork)}>
-                <DragIcon className={STYLES.dragIcon} />
+                <DragIcon className="w-4 h-4" />
               </div>
 
-              {/* Drop Zone Indicator */}
               {dragOverItem === artwork.id && draggedItem !== artwork.id && (
-                <div className={STYLES.dropZone}>
-                  <div className={STYLES.dropBadge}>Drop here</div>
+                <div className={dragStyles.dropZone}>
+                  <div className={dragStyles.dropBadge}>Drop here</div>
                 </div>
               )}
 
-              {/* Card Content */}
-              <div className={STYLES.cardContent}>
-                <h3 className={STYLES.cardTitle}>{artwork.title}</h3>
+              <div className="p-3">
+                <h3 className={`font-medium text-sm truncate ${theme.text.h1}`}>
+                  {artwork.title}
+                </h3>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Empty State */}
         {items.length === 0 && (
-          <div className={STYLES.emptyState}>
-            <p className={STYLES.emptyText}>No artworks found.</p>
+          <div className={theme.state.empty}>
+            <p className={theme.state.emptyText}>No artworks found.</p>
           </div>
         )}
       </div>
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteModal}
         onClose={handleDeleteCancel}

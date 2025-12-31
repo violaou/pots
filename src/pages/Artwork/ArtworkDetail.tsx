@@ -8,7 +8,9 @@ import {
   deleteArtwork,
   getArtworkWithImages
 } from '../../services/artwork-service'
+import { theme } from '../../styles/theme'
 import type { Artwork, ArtworkImage } from '../../types'
+
 /**
  * Sort the artwork images by their sort order,
  * with the hero image first, then the rest by sort order.
@@ -22,16 +24,14 @@ function sortArtworkImages(images: ArtworkImage[]): ArtworkImage[] {
 }
 
 function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
-  const ordered = useMemo(() => {
-    return sortArtworkImages(images)
-  }, [images])
+  const ordered = useMemo(() => sortArtworkImages(images), [images])
 
   if (!ordered.length) return null
   const [hero, ...rest] = ordered
 
   return (
     <div className="space-y-6">
-      <div className="aspect-square bg-gray-50">
+      <div className="aspect-square bg-white">
         <img
           src={hero.imageUrl}
           alt={hero.alt ?? ''}
@@ -41,7 +41,7 @@ function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
       {rest.length ? (
         <div className="grid grid-cols-2 gap-4">
           {rest.map((img) => (
-            <div key={img.id} className="aspect-square bg-gray-50">
+            <div key={img.id} className="aspect-square bg-white">
               <img
                 src={img.imageUrl}
                 alt={img.alt ?? ''}
@@ -55,7 +55,16 @@ function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
   )
 }
 
-export const ArtworkDetail = () => {
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={theme.detailRow}>
+      <span className={theme.text.subtle}>{label}</span>
+      <span className={theme.text.h1}>{value}</span>
+    </div>
+  )
+}
+
+export function ArtworkDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [artwork, setArtwork] = useState<Artwork | null>(null)
@@ -91,18 +100,18 @@ export const ArtworkDetail = () => {
 
   if (!artwork) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Artwork not found</p>
+      <div className={theme.layout.pageCenter}>
+        <p className={`text-lg ${theme.text.muted}`}>Artwork not found</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-5xl mx-auto px-4">
+    <div className={theme.layout.page}>
+      <div className={theme.layout.containerWide}>
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8"
+          className={`${theme.backLink} mb-8`}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back
@@ -112,46 +121,44 @@ export const ArtworkDetail = () => {
           <div className="space-y-6">
             <HeroAndRelatedImages images={artwork.images} />
           </div>
+
           <div className="space-y-6">
-            <h1 className="text-2xl font-medium text-gray-900">
+            <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
               {artwork.title}
             </h1>
+
             {isAdmin ? (
               <div className="flex items-center gap-3">
                 <Link
                   to={`/gallery/${artwork.slug}/edit`}
-                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50"
+                  className={theme.button.sm.secondary}
                 >
                   Edit
                 </Link>
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50"
+                  className={theme.button.sm.danger}
                 >
                   Delete
                 </button>
               </div>
             ) : null}
+
             {artwork.description ? (
-              <p className="text-gray-600">{artwork.description}</p>
+              <p className={theme.text.muted}>{artwork.description}</p>
             ) : null}
+
             <div className="space-y-4 pt-4">
               {artwork.materials ? (
-                <div className="flex justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-500">Materials</span>
-                  <span>{artwork.materials}</span>
-                </div>
+                <DetailRow label="Materials" value={artwork.materials} />
               ) : null}
               {typeof artwork.cone === 'number' ? (
-                <div className="flex justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-500">Firing Cone</span>
-                  <span>cone {artwork.cone}</span>
-                </div>
+                <DetailRow label="Firing Cone" value={`cone ${artwork.cone}`} />
               ) : null}
-              <div className="flex justify-between py-2 border-t border-gray-100">
-                <span className="text-gray-500">Microwave Safe</span>
-                <span>{artwork.isMicrowaveSafe ? 'Yes' : 'No'}</span>
-              </div>
+              {/* <DetailRow
+                label="Microwave Safe"
+                value={artwork.isMicrowaveSafe ? 'Yes' : 'No'}
+              /> */}
             </div>
           </div>
         </div>

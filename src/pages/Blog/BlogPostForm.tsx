@@ -9,8 +9,18 @@ import {
   updateBlogPost
 } from '../../services/blog-service'
 import { uploadImage } from '../../services/s3-upload'
+import { theme } from '../../styles/theme'
 import type { BlogPost } from '../../types'
 import { BackToBlog } from '../../components/BackToBlog'
+
+// File input has special styling that doesn't fit theme well
+const fileInputStyles = `mt-1 block w-full text-sm ${theme.text.muted}
+  file:mr-4 file:py-2 file:px-4
+  file:rounded-md file:border-0
+  file:text-sm file:font-semibold
+  file:bg-green-50 file:text-green-700
+  dark:file:bg-green-900/30 dark:file:text-green-400
+  hover:file:bg-green-100 dark:hover:file:bg-green-900/50`
 
 export default function BlogPostForm() {
   const navigate = useNavigate()
@@ -95,7 +105,6 @@ export default function BlogPostForm() {
 
       if (imageFile) {
         imageUrl = await uploadImage(imageFile, 'blog')
-        // Delete old image if replacing in edit mode
         if (isEditMode && oldImageUrl && oldImageUrl !== imageUrl) {
           await deleteOldBlogImage(oldImageUrl)
         }
@@ -136,26 +145,20 @@ export default function BlogPostForm() {
   }
 
   if (loading) return null
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className={theme.layout.container}>
       {BackToBlog}
-      <h1 className="text-4xl font-bold mb-8">
+      <h1 className={`text-4xl font-bold mb-8 ${theme.text.h1} text-center`}>
         {isEditMode ? 'Edit Blog Post' : 'Create New Blog Post'}
       </h1>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+      {error && <div className={`${theme.alert.error} mb-4`}>{error}</div>}
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
         <div className="space-y-6">
-          <span>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700"
-            >
+          <div className={theme.form.group}>
+            <label htmlFor="title" className={theme.form.labelRequired}>
               Title
             </label>
             <input
@@ -164,16 +167,14 @@ export default function BlogPostForm() {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
+              className={theme.form.input}
               required
               disabled={saving}
             />
-          </span>
-          <span>
-            <label
-              htmlFor="content"
-              className="block text-sm font-medium text-gray-700"
-            >
+          </div>
+
+          <div className={theme.form.group}>
+            <label htmlFor="content" className={theme.form.labelRequired}>
               Content
             </label>
             <textarea
@@ -182,17 +183,14 @@ export default function BlogPostForm() {
               value={formData.content}
               onChange={handleChange}
               rows={10}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
+              className={theme.form.textarea}
               required
               disabled={saving}
             />
-          </span>
+          </div>
 
-          <span>
-            <label
-              htmlFor="image"
-              className="block text-sm font-medium text-gray-700"
-            >
+          <div className={theme.form.group}>
+            <label htmlFor="image" className={theme.form.labelRequired}>
               Featured Image
             </label>
             <input
@@ -201,12 +199,7 @@ export default function BlogPostForm() {
               name="image"
               accept="image/*"
               onChange={handleImageChange}
-              className="mt-1 block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-semibold
-                file:bg-green-50 file:text-green-700
-                hover:file:bg-green-100"
+              className={fileInputStyles}
               disabled={saving}
             />
             {imagePreview && (
@@ -218,13 +211,10 @@ export default function BlogPostForm() {
                 />
               </div>
             )}
-          </span>
+          </div>
 
-          <span>
-            <label
-              htmlFor="tags"
-              className="block text-sm font-medium text-gray-700"
-            >
+          <div className={theme.form.group}>
+            <label htmlFor="tags" className={theme.form.labelRequired}>
               Tags (comma-separated)
             </label>
             <input
@@ -233,10 +223,10 @@ export default function BlogPostForm() {
               name="tags"
               value={(formData.tags ?? []).join(', ')}
               onChange={handleTagsChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50 text-black"
+              className={theme.form.input}
               disabled={saving}
             />
-          </span>
+          </div>
 
           <div className="flex justify-end gap-3">
             {isEditMode && (
@@ -245,7 +235,7 @@ export default function BlogPostForm() {
                 onClick={() =>
                   id ? navigate(`/blog/${id}`) : navigate('/blog')
                 }
-                className="bg-gray-200 text-black px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={theme.button.ghost}
                 disabled={saving}
               >
                 Cancel
@@ -253,7 +243,7 @@ export default function BlogPostForm() {
             )}
             <button
               type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={theme.button.accent}
               disabled={saving}
             >
               {saving

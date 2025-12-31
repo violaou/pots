@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { useAuth } from '../../contexts/AuthContext'
 import { getBlogPosts } from '../../services/blog-service'
+import { theme } from '../../styles/theme'
 import type { BlogPost } from '../../types'
 
 function CreatePostButton() {
@@ -14,18 +15,15 @@ function CreatePostButton() {
   } = useAuth()
 
   if (authLoading) {
-    return <div className="w-32 h-10 bg-gray-200 animate-pulse rounded-md" />
+    return (
+      <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-md" />
+    )
   }
 
-  if (!isAuthenticated || adminLoading || !isAdmin) {
-    return null
-  }
+  if (!isAuthenticated || adminLoading || !isAdmin) return null
 
   return (
-    <Link
-      to="/blog/create"
-      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-    >
+    <Link to="/blog/create" className={theme.button.accent}>
       Create New Post
     </Link>
   )
@@ -35,14 +33,14 @@ function BlogHeader() {
   const { isAuthenticated, loading: authLoading } = useAuth()
 
   return (
-    <div className="flex justify-between items-center mb-8">
-      <h1 className="text-4xl font-bold text-gray-900">Blog</h1>
+    <div className={theme.layout.header}>
+      <h1 className={`text-4xl font-bold ${theme.text.h1}`}>Blog</h1>
       <div className="flex gap-3">
         <CreatePostButton />
         {!authLoading && !isAuthenticated && (
           <Link
             to="/login"
-            className="bg-yellow-200 text-black px-4 py-2 rounded-md hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+            className="bg-yellow-200 text-black px-4 py-2 rounded-md hover:bg-yellow-300"
           >
             Login
           </Link>
@@ -54,7 +52,7 @@ function BlogHeader() {
 
 function BlogLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className={theme.layout.container}>
       <BlogHeader />
       {children}
     </div>
@@ -78,7 +76,6 @@ export default function Blog() {
         setLoading(false)
       }
     }
-
     fetchPosts()
   }, [])
 
@@ -93,7 +90,7 @@ export default function Blog() {
   if (error) {
     return (
       <BlogLayout>
-        <div className="text-center text-red-600 py-8">{error}</div>
+        <div className={`text-center py-8 ${theme.text.error}`}>{error}</div>
       </BlogLayout>
     )
   }
@@ -101,8 +98,8 @@ export default function Blog() {
   if (posts.length === 0) {
     return (
       <BlogLayout>
-        <div className="text-center py-12">
-          <p className="text-xl text-gray-600 mb-4">
+        <div className={theme.state.empty}>
+          <p className={`text-xl ${theme.text.muted} mb-4`}>
             Looks like there are no blog posts yet!
           </p>
         </div>
@@ -119,24 +116,34 @@ export default function Blog() {
             to={`/blog/${post.id}`}
             className="block hover:shadow-lg transition-shadow duration-200"
           >
-            <article className="bg-soft-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-semibold mb-2">{post.title}</h2>
-              <div className="text-sm text-black mb-4">
-                <span>By {post.author}</span>
-                <span className="mx-2">•</span>
-                <span>{new Date(post.date).toLocaleDateString()}</span>
+            <article className={`${theme.section} shadow-md flex gap-6`}>
+              <div className="flex-1 min-w-0">
+                <h2 className={`text-2xl font-semibold ${theme.text.h1} mb-2`}>
+                  {post.title}
+                </h2>
+                <div className={`text-sm ${theme.text.muted} mb-4`}>
+                  <span>{new Date(post.date).toLocaleDateString()}</span>
+                </div>
+                <p className={`${theme.text.body} mb-4 line-clamp-3`}>
+                  {post.content}
+                </p>
+                {post.tags && (
+                  <div className="flex gap-2">
+                    {post.tags.map((tag) => (
+                      <span key={tag} className={theme.tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <p className="text-black mb-4 line-clamp-3">{post.content}</p>
-              {post.tags && (
-                <div className="flex gap-2">
-                  {post.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+              {post.imageUrl && (
+                <div className="flex-shrink-0 w-32 h-32 md:w-40 md:h-40">
+                  <img
+                    src={post.imageUrl}
+                    alt={post.title}
+                    className={`${theme.image.cover} rounded-lg`}
+                  />
                 </div>
               )}
             </article>
