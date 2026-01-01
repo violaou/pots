@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ConfirmationModal } from '../../components/ConfirmationModal'
@@ -23,35 +23,64 @@ function sortArtworkImages(images: ArtworkImage[]): ArtworkImage[] {
   })
 }
 
-function HeroAndRelatedImages({ images }: { images: ArtworkImage[] }) {
+function ImageGallery({ images }: { images: ArtworkImage[] }) {
   const ordered = useMemo(() => sortArtworkImages(images), [images])
+  const [selectedImage, setSelectedImage] = useState<ArtworkImage | null>(null)
+
+  const closeLightbox = useCallback(() => setSelectedImage(null), [])
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!selectedImage) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [selectedImage, closeLightbox])
 
   if (!ordered.length) return null
-  const [hero, ...rest] = ordered
 
   return (
-    <div className="space-y-6">
-      <div className="aspect-square bg-white">
-        <img
-          src={hero.imageUrl}
-          alt={hero.alt ?? ''}
-          className="w-full h-full object-cover"
-        />
+    <>
+      <div className="space-y-4">
+        {ordered.map((img) => (
+          <div
+            key={img.id}
+            className="aspect-square bg-white cursor-pointer"
+            onClick={() => setSelectedImage(img)}
+          >
+            <img
+              src={img.imageUrl}
+              alt={img.alt ?? ''}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
       </div>
-      {rest.length ? (
-        <div className="grid grid-cols-2 gap-4">
-          {rest.map((img) => (
-            <div key={img.id} className="aspect-square bg-white">
-              <img
-                src={img.imageUrl}
-                alt={img.alt ?? ''}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
+
+      {/* Lightbox Modal */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 text-white text-3xl font-light hover:text-gray-300 z-10"
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <img
+            src={selectedImage.imageUrl}
+            alt={selectedImage.alt ?? ''}
+            className="max-h-[90vh] max-w-[1000px] w-[80vw] object-contain bg-white"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
-      ) : null}
-    </div>
+      )}
+    </>
   )
 }
 
@@ -68,6 +97,7 @@ export function ArtworkDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [artwork, setArtwork] = useState<Artwork | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const { isAdmin } = useAuth()
@@ -75,9 +105,14 @@ export function ArtworkDetail() {
   useEffect(() => {
     if (!slug) return
     let isMounted = true
-    getArtworkWithImages(slug).then((data) => {
-      if (isMounted) setArtwork(data)
-    })
+    setIsLoading(true)
+    getArtworkWithImages(slug)
+      .then((data) => {
+        if (isMounted) setArtwork(data)
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
     return () => {
       isMounted = false
     }
@@ -97,6 +132,9 @@ export function ArtworkDetail() {
       setShowDeleteModal(false)
     }
   }
+
+  // Show nothing while loading to prevent flash
+  if (isLoading) return null
 
   if (!artwork) {
     return (
@@ -118,16 +156,16 @@ export function ArtworkDetail() {
         </button>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <HeroAndRelatedImages images={artwork.images} />
+          <div>
+            <ImageGallery images={artwork.images} />
           </div>
 
-          <div className="space-y-6">
+          <div className="md:sticky md:top-32 md:self-start space-y-6">
             <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
               {artwork.title}
             </h1>
 
-            {isAdmin ? (
+            {isAdmin && (
               <div className="flex items-center gap-3">
                 <Link
                   to={`/gallery/${artwork.slug}/edit`}
@@ -142,23 +180,19 @@ export function ArtworkDetail() {
                   Delete
                 </button>
               </div>
-            ) : null}
+            )}
 
-            {artwork.description ? (
+            {artwork.description && (
               <p className={theme.text.muted}>{artwork.description}</p>
-            ) : null}
+            )}
 
             <div className="space-y-4 pt-4">
-              {artwork.materials ? (
+              {artwork.materials && (
                 <DetailRow label="Materials" value={artwork.materials} />
-              ) : null}
-              {typeof artwork.cone === 'number' ? (
+              )}
+              {typeof artwork.cone === 'number' && (
                 <DetailRow label="Firing Cone" value={`cone ${artwork.cone}`} />
-              ) : null}
-              {/* <DetailRow
-                label="Microwave Safe"
-                value={artwork.isMicrowaveSafe ? 'Yes' : 'No'}
-              /> */}
+              )}
             </div>
           </div>
         </div>

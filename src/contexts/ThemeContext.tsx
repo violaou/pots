@@ -7,8 +7,8 @@ import {
   useState
 } from 'react'
 
-const THEME_LIGHT = 'light'
-const THEME_DARK = 'dark'
+export const THEME_LIGHT = 'light'
+export const THEME_DARK = 'dark'
 const STORAGE_KEY = 'theme'
 
 type Theme = typeof THEME_LIGHT | typeof THEME_DARK
