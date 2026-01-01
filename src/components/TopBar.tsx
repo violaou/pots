@@ -5,8 +5,7 @@ import { useAuth, useLogout } from '../contexts/AuthContext'
 import { Logo, NavActions, NavLinks, ThemeToggle } from './nav'
 
 const styles = {
-  header:
-    'fixed top-0 left-0 right-0 h-16 border-b border-gray-100 dark:border-neutral-700 bg-white dark:bg-neutral-900 z-10 lg:hidden',
+  header: 'fixed top-0 left-0 right-0 h-16 z-10 lg:hidden',
   headerInner: 'h-full px-4 flex items-center justify-between',
   iconButton:
     'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 focus:outline-none',

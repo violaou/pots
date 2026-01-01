@@ -97,6 +97,7 @@ export function ArtworkDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [artwork, setArtwork] = useState<Artwork | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const { isAdmin } = useAuth()
@@ -104,9 +105,14 @@ export function ArtworkDetail() {
   useEffect(() => {
     if (!slug) return
     let isMounted = true
-    getArtworkWithImages(slug).then((data) => {
-      if (isMounted) setArtwork(data)
-    })
+    setIsLoading(true)
+    getArtworkWithImages(slug)
+      .then((data) => {
+        if (isMounted) setArtwork(data)
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
     return () => {
       isMounted = false
     }
@@ -126,6 +132,9 @@ export function ArtworkDetail() {
       setShowDeleteModal(false)
     }
   }
+
+  // Show nothing while loading to prevent flash
+  if (isLoading) return null
 
   if (!artwork) {
     return (

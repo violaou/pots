@@ -104,22 +104,30 @@
   transform: scale(1.2);
 }
 
-/* Dark mode - subtle warm glow instead */
+/* Dark mode - gradient to transparent over solid background-color */
 .dark .gradient-bg::before {
-  background:
+  /* Solid base color underneath */
+  background-color: #1a1a1a;
+
+  /* Gradients fade from warm color to transparent (single channel = smoother) */
+  background-image:
     radial-gradient(
-      ellipse 50% 55% at 25% 30%,
-      oklch(35% 0.08 55 / 0.6) 0%,
-      oklch(25% 0.05 50 / 0.3) 40%,
+      ellipse at 25% 30%,
+      hsl(30 35% 22%) 0%,
       transparent 70%
     ),
     radial-gradient(
-      ellipse 45% 50% at 82% 78%,
-      oklch(30% 0.06 50 / 0.5) 0%,
-      oklch(22% 0.04 45 / 0.25) 40%,
+      ellipse at 80% 75%,
+      hsl(25 30% 20%) 0%,
       transparent 70%
     );
-  filter: blur(80px);
+
+  /* Don't fill whole screen - helps with rendering */
+  background-size: 80% 80%, 70% 70%;
+  background-position: 0% 0%, 100% 100%;
+  background-repeat: no-repeat;
+
+  filter: blur(100px);
 }
 
 @layer utilities {
