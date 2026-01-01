@@ -17,6 +17,11 @@
     font-family: "Instrument Sans", system-ui, sans-serif;
   }
 
+  /* Nav elements should use serif */
+  nav a, nav button, nav span {
+    font-family: "Instrument Serif", serif;
+  }
+
   h1 {
     font-size: 3rem; /* text-5xl */
     line-height: 1;
