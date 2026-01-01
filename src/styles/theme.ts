@@ -60,8 +60,8 @@ export const theme = {
     textarea:
       'w-full border border-neutral-300 dark:border-neutral-600 rounded px-3 py-2 bg-white dark:bg-neutral-900 text-gray-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical min-h-[100px]',
     checkbox: 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded',
-    checkboxLabel: 'inline-flex items-center gap-2',
-    checkboxGroup: 'flex items-center gap-6',
+    checkboxLabel: 'inline-flex items-center gap-2 text-gray-700 dark:text-gray-300',
+    checkboxGroup: 'flex items-center gap-6 pt-4',
     actions: 'flex gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-700',
     error: 'text-red-600 dark:text-red-400 text-sm mt-1',
     fieldError: 'border-red-500 focus:ring-red-500'
@@ -83,7 +83,7 @@ export const theme = {
     dangerSolid:
       'px-4 py-2 rounded bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed',
     accent:
-      'px-4 py-2 rounded bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed',
+      'px-4 py-2 rounded bg-amber-700 dark:bg-amber-800 text-white hover:bg-amber-800 dark:hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed',
     ghost:
       'px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed',
     sm: {

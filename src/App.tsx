@@ -35,7 +35,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen">
+          <div className="min-h-screen gradient-bg">
             <TopBar />
             <Sidebar />
             <div className="lg:pl-64 pt-16 lg:pt-0" id="main-content">
