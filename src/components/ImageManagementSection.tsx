@@ -1,14 +1,13 @@
-import { useCallback, useState } from 'react'
-import { X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Upload, X } from 'lucide-react'
 
-import type { ArtworkImage } from '../types'
-import { styles } from './ImageManagementSection.styles'
 import {
-  useFileDragDrop,
   processImageFiles,
   setHeroInArray,
   updateAltInArray
 } from '../hooks/useImageUpload'
+import type { ArtworkImage } from '../types'
+import { styles } from './ImageManagementSection.styles'
 
 /**
  * Represents an image in the management UI.
@@ -34,7 +33,7 @@ interface ImageManagementSectionProps {
 }
 
 /**
- * Convert existing ArtworkImages to ManagedImages
+ * Convert existing ArtworkImages to ManagedImages (for edit mode)
  */
 export function artworkImagesToManaged(images: ArtworkImage[]): ManagedImage[] {
   return images
@@ -51,6 +50,72 @@ export function artworkImagesToManaged(images: ArtworkImage[]): ManagedImage[] {
     }))
 }
 
+/**
+ * Simple image preview type for add mode (backwards compatibility)
+ */
+export interface ImagePreview {
+  id: string
+  file: File
+  preview: string
+  alt: string
+  isHero: boolean
+}
+
+/**
+ * Convert simple ImagePreview array to ManagedImages (for add mode)
+ */
+export function imagePreviewsToManaged(images: ImagePreview[]): ManagedImage[] {
+  return images.map((img, index) => ({
+    id: img.id,
+    file: img.file,
+    preview: img.preview,
+    alt: img.alt,
+    isHero: img.isHero,
+    sortOrder: index,
+    isNew: true
+  }))
+}
+
+/**
+ * Convert ManagedImages back to simple ImagePreview array (for add mode submission)
+ */
+export function managedToImagePreviews(images: ManagedImage[]): ImagePreview[] {
+  return images
+    .filter((img) => !img.markedForDeletion && img.file)
+    .map((img) => ({
+      id: img.id,
+      file: img.file!,
+      preview: img.preview,
+      alt: img.alt,
+      isHero: img.isHero
+    }))
+}
+
+/**
+ * Renders status badges for an image card
+ */
+function ImageBadges({ image }: { image: ManagedImage }) {
+  if (image.markedForDeletion)
+    return (
+      <span className={`${styles.badge} ${styles.badgeDeleted}`}>Deleted</span>
+    )
+
+  return (
+    <>
+      {image.isHero && (
+        <span className={`${styles.badge} ${styles.badgeHero}`}>Hero</span>
+      )}
+      {image.isNew && (
+        <span
+          className={`${styles.badge} ${image.isHero ? styles.badgeNew : styles.badgeNewOnly}`}
+        >
+          New
+        </span>
+      )}
+    </>
+  )
+}
+
 export default function ImageManagementSection({
   images,
   onImagesChange,
@@ -58,6 +123,7 @@ export default function ImageManagementSection({
   disabled = false
 }: ImageManagementSectionProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [isPageDragOver, setIsPageDragOver] = useState(false)
 
   const activeImages = images.filter((img) => !img.markedForDeletion)
 
@@ -84,13 +150,63 @@ export default function ImageManagementSection({
     [images, activeImages.length, onImagesChange, disabled]
   )
 
-  const {
-    isDragOver,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    handleFileInputChange
-  } = useFileDragDrop(handleFiles, disabled)
+  // Full-page drag and drop
+  useEffect(() => {
+    if (disabled) return
+
+    let dragCounter = 0
+
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounter++
+      if (e.dataTransfer?.types.includes('Files')) {
+        setIsPageDragOver(true)
+      }
+    }
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounter--
+      if (dragCounter === 0) {
+        setIsPageDragOver(false)
+      }
+    }
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault()
+    }
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounter = 0
+      setIsPageDragOver(false)
+      if (e.dataTransfer?.files.length) {
+        handleFiles(e.dataTransfer.files)
+      }
+    }
+
+    document.addEventListener('dragenter', handleDragEnter)
+    document.addEventListener('dragleave', handleDragLeave)
+    document.addEventListener('dragover', handleDragOver)
+    document.addEventListener('drop', handleDrop)
+
+    return () => {
+      document.removeEventListener('dragenter', handleDragEnter)
+      document.removeEventListener('dragleave', handleDragLeave)
+      document.removeEventListener('dragover', handleDragOver)
+      document.removeEventListener('drop', handleDrop)
+    }
+  }, [disabled, handleFiles])
+
+  const handleFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleFiles(e.target.files)
+      }
+      e.target.value = ''
+    },
+    [handleFiles]
+  )
 
   const setHeroImage = useCallback(
     (imageId: string) => {
@@ -164,12 +280,14 @@ export default function ImageManagementSection({
       const newImages = [...images]
       const [draggedItem] = newImages.splice(draggedIndex, 1)
       newImages.splice(index, 0, draggedItem)
-      newImages.forEach((img, i) => {
-        img.sortOrder = i
-      })
+      // Create new objects with updated sortOrder to avoid mutating originals
+      const updatedImages = newImages.map((img, i) => ({
+        ...img,
+        sortOrder: i
+      }))
 
       setDraggedIndex(index)
-      onImagesChange(newImages)
+      onImagesChange(updatedImages)
     },
     [draggedIndex, images, onImagesChange, disabled]
   )
@@ -178,27 +296,27 @@ export default function ImageManagementSection({
 
   const sortedImages = [...images].sort((a, b) => a.sortOrder - b.sortOrder)
 
+  const uploadAreaClass = `${styles.uploadArea} ${disabled ? styles.uploadAreaDisabled : ''}`
+
+  const openFileDialog = () => {
+    if (!disabled) document.getElementById('image-management-upload')?.click()
+  }
+
   return (
     <div className={styles.container}>
-      <div
-        className={[
-          styles.uploadArea,
-          isDragOver && styles.uploadAreaActive,
-          disabled && styles.uploadAreaDisabled
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() =>
-          !disabled &&
-          document.getElementById('image-management-upload')?.click()
-        }
-      >
+      {isPageDragOver && (
+        <div className={styles.dropOverlay}>
+          <div className={styles.dropOverlayContent}>
+            <Upload className={styles.dropOverlayIcon} />
+            <p className={styles.dropOverlayText}>Drop images here</p>
+          </div>
+        </div>
+      )}
+
+      <div className={uploadAreaClass} onClick={openFileDialog}>
         <div className={styles.uploadText}>
-          <p>Drag and drop images here, or click to select</p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p>Drop images anywhere, or click to select</p>
+          <p className={styles.uploadHint}>
             {activeImages.length} image{activeImages.length !== 1 ? 's' : ''} •
             Drag cards to reorder
           </p>
@@ -216,110 +334,88 @@ export default function ImageManagementSection({
 
       {sortedImages.length > 0 && (
         <div className={styles.imageGrid}>
-          {sortedImages.map((image, index) => (
-            <div
-              key={image.id}
-              className={[
-                styles.imageCard,
-                image.markedForDeletion && styles.imageCardDeleted,
-                draggedIndex === index && styles.imageCardDragging
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              draggable={!disabled && !image.markedForDeletion}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={(e) => handleDragOverCard(e, index)}
-              onDragEnd={handleDragEnd}
-            >
-              <img
-                src={image.preview}
-                alt={image.alt || 'Image preview'}
-                className={styles.imageThumb}
-              />
+          {sortedImages.map((image, index) => {
+            const isDeleted = image.markedForDeletion
+            const isDragging = draggedIndex === index
+            const cardClass = `${styles.imageCard} ${isDeleted ? styles.imageCardDeleted : ''} ${isDragging ? styles.imageCardDragging : ''}`
 
-              {image.markedForDeletion ? (
-                <div className={styles.deletedBadge}>Deleted</div>
-              ) : (
-                <>
-                  {image.isHero && <div className={styles.heroBadge}>Hero</div>}
-                  {image.isNew && (
-                    <div
-                      className={
-                        image.isHero
-                          ? styles.newBadge
-                          : `${styles.heroBadge} bg-green-600`
-                      }
-                    >
-                      New
+            return (
+              <div
+                key={image.id}
+                className={cardClass}
+                draggable={!disabled && !isDeleted}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOverCard(e, index)}
+                onDragEnd={handleDragEnd}
+              >
+                <img
+                  src={image.preview}
+                  alt={image.alt || 'Image preview'}
+                  className={styles.imageThumb}
+                />
+
+                <ImageBadges image={image} />
+
+                {!isDeleted && !image.isHero && (
+                  <div className={styles.overlay}>
+                    <div className={styles.overlayActions}>
+                      <button
+                        type="button"
+                        onClick={() => setHeroImage(image.id)}
+                        className={styles.actionButton}
+                        disabled={disabled}
+                      >
+                        Set as Hero
+                      </button>
                     </div>
-                  )}
-                </>
-              )}
+                  </div>
+                )}
 
-              {!image.markedForDeletion && !image.isHero && (
-                <div className={styles.overlay}>
-                  <div className={styles.overlayActions}>
+                {isDeleted && (
+                  <div className={styles.overlayDeleted}>
                     <button
                       type="button"
-                      onClick={() => setHeroImage(image.id)}
+                      onClick={() => restoreImage(image.id)}
                       className={styles.actionButton}
                       disabled={disabled}
                     >
-                      Set as Hero
+                      Restore
                     </button>
                   </div>
-                </div>
-              )}
+                )}
 
-              {image.markedForDeletion && (
-                <div
-                  className={styles.overlay}
-                  style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => restoreImage(image.id)}
-                    className={styles.actionButton}
-                    disabled={disabled}
-                  >
-                    Restore
-                  </button>
-                </div>
-              )}
+                {!isDeleted && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => toggleDelete(image.id)}
+                      className={styles.removeButton}
+                      title={image.isNew ? 'Remove' : 'Mark for deletion'}
+                      disabled={disabled}
+                    >
+                      <X size={20} aria-label="Remove image" />
+                    </button>
 
-              {!image.markedForDeletion && (
-                <button
-                  type="button"
-                  onClick={() => toggleDelete(image.id)}
-                  className={styles.removeButton}
-                  title={image.isNew ? 'Remove' : 'Mark for deletion'}
-                  disabled={disabled}
-                >
-                  <X size={20} aria-label="Remove image" />
-                </button>
-              )}
+                    <div className={styles.altInput}>
+                      <input
+                        type="text"
+                        placeholder="Alt text..."
+                        value={image.alt}
+                        onChange={(e) => updateAlt(image.id, e.target.value)}
+                        className={styles.altInputField}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={disabled}
+                      />
+                    </div>
 
-              {!image.markedForDeletion && (
-                <div className={styles.altInput}>
-                  <input
-                    type="text"
-                    placeholder="Alt text..."
-                    value={image.alt}
-                    onChange={(e) => updateAlt(image.id, e.target.value)}
-                    className={styles.altInputField}
-                    onClick={(e) => e.stopPropagation()}
-                    disabled={disabled}
-                  />
-                </div>
-              )}
-
-              {!image.markedForDeletion && (
-                <div className={styles.dragHandle} title="Drag to reorder">
-                  ⋮⋮
-                </div>
-              )}
-            </div>
-          ))}
+                    <div className={styles.dragHandle} title="Drag to reorder">
+                      ⋮⋮
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 

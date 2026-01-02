@@ -4,10 +4,9 @@ export * from './icons'
 export {
   artworkImagesToManaged,
   default as ImageManagementSection,
-  type ManagedImage
-} from './ImageManagementSection'
-export {
   type ImagePreview,
-  default as ImageUploadSection} from './ImageUploadSection'
+  imagePreviewsToManaged,
+  type ManagedImage,
+  managedToImagePreviews} from './ImageManagementSection'
 export { default as Sidebar } from './Sidebar'
 export { TopBar } from './TopBar'

@@ -26,8 +26,13 @@ function sortArtworkImages(images: ArtworkImage[]): ArtworkImage[] {
 function ImageGallery({ images }: { images: ArtworkImage[] }) {
   const ordered = useMemo(() => sortArtworkImages(images), [images])
   const [selectedImage, setSelectedImage] = useState<ArtworkImage | null>(null)
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
 
   const closeLightbox = useCallback(() => setSelectedImage(null), [])
+
+  const handleImageLoad = useCallback((id: string) => {
+    setLoadedImages((prev) => new Set(prev).add(id))
+  }, [])
 
   // Close on Escape key
   useEffect(() => {
@@ -47,13 +52,14 @@ function ImageGallery({ images }: { images: ArtworkImage[] }) {
         {ordered.map((img) => (
           <div
             key={img.id}
-            className="aspect-square bg-white cursor-pointer"
+            className="aspect-square bg-neutral-100 dark:bg-neutral-800 cursor-pointer"
             onClick={() => setSelectedImage(img)}
           >
             <img
               src={img.imageUrl}
               alt={img.alt ?? ''}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover img-fade ${loadedImages.has(img.id) ? 'loaded' : ''}`}
+              onLoad={() => handleImageLoad(img.id)}
             />
           </div>
         ))}
@@ -147,53 +153,57 @@ export function ArtworkDetail() {
   return (
     <div className={theme.layout.page}>
       <div className={theme.layout.containerWide}>
-        <button
-          onClick={() => navigate(-1)}
-          className={`${theme.backLink} mb-8`}
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back
-        </button>
-
         <div className="grid md:grid-cols-2 gap-8">
           <div>
             <ImageGallery images={artwork.images} />
           </div>
 
-          <div className="md:sticky md:top-32 md:self-start space-y-6">
-            <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
-              {artwork.title}
-            </h1>
+          <div className="relative">
+            <div className="md:sticky md:top-8 space-y-6">
+              <button onClick={() => navigate(-1)} className={theme.backLink}>
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Back
+              </button>
 
-            {isAdmin && (
-              <div className="flex items-center gap-3">
-                <Link
-                  to={`/gallery/${artwork.slug}/edit`}
-                  className={theme.button.sm.secondary}
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => setShowDeleteModal(true)}
-                  className={theme.button.sm.danger}
-                >
-                  Delete
-                </button>
-              </div>
-            )}
+              <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
+                {artwork.title}
+              </h1>
 
-            {artwork.description && (
-              <p className={theme.text.muted}>{artwork.description}</p>
-            )}
-
-            <div className="space-y-4 pt-4">
-              {artwork.materials && (
-                <DetailRow label="Materials" value={artwork.materials} />
+              {isAdmin && (
+                <div className="flex items-center gap-3">
+                  <Link
+                    to={`/gallery/${artwork.slug}/edit`}
+                    className={theme.button.sm.secondary}
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className={theme.button.sm.danger}
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
-              {typeof artwork.cone === 'number' && (
-                <DetailRow label="Firing Cone" value={`cone ${artwork.cone}`} />
+
+              {artwork.description && (
+                <p className={theme.text.muted}>{artwork.description}</p>
               )}
             </div>
+
+            {(artwork.materials || typeof artwork.cone === 'number') && (
+              <div className="md:fixed md:bottom-8 md:w-80 space-y-2 mt-8 md:mt-0">
+                {artwork.materials && (
+                  <DetailRow label="Materials" value={artwork.materials} />
+                )}
+                {typeof artwork.cone === 'number' && (
+                  <DetailRow
+                    label="Firing Cone"
+                    value={`cone ${artwork.cone}`}
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

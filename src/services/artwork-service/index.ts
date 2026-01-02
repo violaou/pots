@@ -38,6 +38,7 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
         id,
         slug,
         title,
+        sort_order,
         artwork_images!inner (
           image_url,
           is_hero
@@ -45,7 +46,7 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
       `)
       .eq('is_published', true)
       .eq('artwork_images.is_hero', true)
-      .order('created_at', { ascending: false })
+      .order('sort_order')
 
     if (!error && data) {
       const list: ArtworkListItem[] = data.map((item) => ({
@@ -73,6 +74,7 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
 /**
  * List all artworks including unpublished (admin only).
  * Does not use cache since it includes unpublished items.
+ * Ordered by sort_order for manual ordering.
  */
 export async function listAllArtworks(): Promise<ArtworkListItem[]> {
   await requireAdmin()
@@ -85,12 +87,13 @@ export async function listAllArtworks(): Promise<ArtworkListItem[]> {
         slug,
         title,
         is_published,
+        sort_order,
         artwork_images (
           image_url,
           is_hero
         )
       `)
-      .order('created_at', { ascending: false })
+      .order('sort_order', { ascending: true })
 
     if (error) {
       console.error('[artwork-service] listAllArtworks query error:', error)
@@ -339,6 +342,36 @@ export async function updateArtwork(
     if (prevDetail) setDetailCache(slug, prevDetail)
     throw error
   }
+}
+
+// ============================================================================
+// Update Sort Order (Bulk)
+// ============================================================================
+
+export async function updateArtworkSortOrder(
+  items: { id: string; sortOrder: number }[]
+): Promise<void> {
+  await requireAdmin()
+
+  // Update each artwork's sort_order
+  const updates = items.map(({ id, sortOrder }) =>
+    supabase
+      .from('artworks')
+      .update({ sort_order: sortOrder })
+      .eq('id', id)
+  )
+
+  const results = await Promise.all(updates)
+  const errors = results.filter((r) => r.error)
+
+  if (errors.length > 0) {
+    console.error('[artwork-service] Failed to update some sort orders:', errors)
+    throw new Error('Failed to update artwork order')
+  }
+
+  // Clear list cache since order changed
+  clearListCache()
+  console.log('[artwork-service] Updated sort order for', items.length, 'artworks')
 }
 
 // ============================================================================

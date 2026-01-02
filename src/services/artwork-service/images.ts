@@ -5,15 +5,60 @@ import type { AddImageInput, ArtworkImage, ImageChanges,UpdateImageInput } from 
 
 /**
  * Update multiple images for an artwork (sort order, alt text, hero status).
+ * Handles sort_order updates in two passes to avoid unique constraint violations.
  */
 async function updateArtworkImages(
   artworkId: string,
   updates: UpdateImageInput[]
 ): Promise<void> {
-  for (const update of updates) {
+  // Separate sort order updates from other updates
+  const sortOrderUpdates = updates.filter((u) => u.sortOrder !== undefined)
+  const otherUpdates = updates.map((u) => {
+    const { sortOrder: _, ...rest } = u
+    return rest
+  })
+
+  // First pass: set sort_order to negative values to avoid conflicts
+  if (sortOrderUpdates.length > 0) {
+    for (const update of sortOrderUpdates) {
+      const { error } = await supabase
+        .from('artwork_images')
+        .update({ sort_order: -(update.sortOrder! + 1000) })
+        .eq('id', update.id)
+        .eq('artwork_id', artworkId)
+
+      if (error) {
+        console.error('[artwork-service] Failed to update image sort order (pass 1):', error)
+        throw new Error(`Failed to update image: ${error.message}`)
+      }
+    }
+
+    // Second pass: set final sort_order values
+    for (const update of sortOrderUpdates) {
+      const { error } = await supabase
+        .from('artwork_images')
+        .update({ sort_order: update.sortOrder })
+        .eq('id', update.id)
+        .eq('artwork_id', artworkId)
+
+      if (error) {
+        console.error('[artwork-service] Failed to update image sort order (pass 2):', error)
+        throw new Error(`Failed to update image: ${error.message}`)
+      }
+    }
+  }
+
+  // Update other fields (alt, isHero)
+  const heroFalseUpdates = otherUpdates.filter((u) => u.isHero === false)
+  const heroTrueUpdates = otherUpdates.filter((u) => u.isHero === true)
+  const nonHeroUpdates = otherUpdates.filter((u) => u.isHero === undefined)
+
+  // Order: remove hero status first, then non-hero updates, then set new hero
+  const orderedUpdates = [...heroFalseUpdates, ...nonHeroUpdates, ...heroTrueUpdates]
+
+  for (const update of orderedUpdates) {
     const payload: Record<string, unknown> = {}
     if (update.alt !== undefined) payload.alt = update.alt
-    if (update.sortOrder !== undefined) payload.sort_order = update.sortOrder
     if (update.isHero !== undefined) payload.is_hero = update.isHero
 
     if (Object.keys(payload).length > 0) {

@@ -1,12 +1,48 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+
+import {
+  listArtworks,
+  type ArtworkListItem
+} from '../services/artwork-service/index'
 import { theme } from '../styles/theme'
 
 export function About() {
+  const [latestArtworks, setLatestArtworks] = useState<ArtworkListItem[]>([])
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    listArtworks().then((artworks) => {
+      setLatestArtworks(artworks.slice(0, 5))
+    })
+  }, [])
+
+  const handleImageLoad = (id: string) => {
+    setLoadedImages((prev) => new Set(prev).add(id))
+  }
+
   return (
     <div className={theme.layout.container}>
       <h1 className={theme.text.h1}>About</h1>
 
       <div className="mb-12">
+        {latestArtworks.length > 0 && (
+          <div className="flex mb-8">
+            {latestArtworks.map((artwork) => (
+              <div
+                key={artwork.id}
+                className="flex-1 aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800"
+              >
+                <img
+                  src={artwork.heroImageUrl}
+                  alt={artwork.title}
+                  className={`w-full h-full object-cover img-fade ${loadedImages.has(artwork.id) ? 'loaded' : ''}`}
+                  onLoad={() => handleImageLoad(artwork.id)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
         <h2 className={theme.text.h2}>Hi there! 👋 I'm Viola</h2>
         <p className={`${theme.text.body} mb-4`}>
           I'm a ceramic artist based in Toronto, Canada, specializing in

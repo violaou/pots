@@ -4,7 +4,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
-import { ImageUploadSection, type ImagePreview } from '../../components'
+import {
+  ImageManagementSection,
+  managedToImagePreviews,
+  type ManagedImage
+} from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import { createArtwork } from '../../services/artwork-service/index'
 import { uploadImage, isMockMode } from '../../services/s3-upload'
@@ -45,7 +49,7 @@ export default function AddArtwork() {
   })
 
   // Image state (separate from form since React Hook Form doesn't handle file previews well)
-  const [images, setImages] = useState<ImagePreview[]>([])
+  const [images, setImages] = useState<ManagedImage[]>([])
   const [imageError, setImageError] = useState<string>('')
   const [uploadStatus, setUploadStatus] = useState<string>('')
 
@@ -67,15 +71,16 @@ export default function AddArtwork() {
   }
 
   // Handle image changes
-  const handleImagesChange = (newImages: ImagePreview[]) => {
+  const handleImagesChange = (newImages: ManagedImage[]) => {
     setImages(newImages)
     if (newImages.length > 0) setImageError('')
   }
 
   // Form submission
   const onSubmit = async (data: ArtworkFormData) => {
-    // Validate images
-    if (images.length === 0) {
+    // Convert to simple previews and validate
+    const imagePreviews = managedToImagePreviews(images)
+    if (imagePreviews.length === 0) {
       setImageError('At least one image is required')
       return
     }
@@ -83,10 +88,10 @@ export default function AddArtwork() {
     try {
       // Upload images to S3 (or mock in dev)
       setUploadStatus(
-        `Uploading ${images.length} image${images.length > 1 ? 's' : ''}...`
+        `Uploading ${imagePreviews.length} image${imagePreviews.length > 1 ? 's' : ''}...`
       )
       const uploadedImages = await Promise.all(
-        images.map(async (img) => {
+        imagePreviews.map(async (img) => {
           const cdnUrl = await uploadImage(img.file)
           return {
             cdnUrl,
@@ -157,7 +162,7 @@ export default function AddArtwork() {
                 for real uploads.
               </div>
             )}
-            <ImageUploadSection
+            <ImageManagementSection
               images={images}
               onImagesChange={handleImagesChange}
               error={imageError}

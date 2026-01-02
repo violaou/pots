@@ -251,18 +251,9 @@ export default function EditArtwork() {
   return (
     <div className={theme.layout.page}>
       <div className={theme.layout.container}>
-        <div className={theme.layout.header}>
-          <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
-            Edit Artwork
-          </h1>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className={theme.button.secondary}
-          >
-            Back
-          </button>
-        </div>
+        <h1 className={`text-2xl font-medium mb-6 ${theme.text.h1}`}>
+          Edit Artwork
+        </h1>
 
         {error && (
           <div className={`mb-4 text-sm ${theme.text.error}`}>{error}</div>

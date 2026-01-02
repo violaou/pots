@@ -12,7 +12,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import {
   deleteArtwork,
   listAllArtworks,
-  updateArtwork
+  updateArtwork,
+  updateArtworkSortOrder
 } from '../../services/artwork-service/index'
 import { theme } from '../../styles/theme'
 import type { ArtworkListItem } from '../../types'
@@ -138,7 +139,7 @@ export default function EditArtworkGrid() {
   }, [])
 
   const handleDrop = useCallback(
-    (e: DragEvent, targetId: string) => {
+    async (e: DragEvent, targetId: string) => {
       e.preventDefault()
       if (!draggedItem || draggedItem === targetId) return
 
@@ -152,7 +153,7 @@ export default function EditArtworkGrid() {
       const [draggedItemData] = newItems.splice(draggedIndex, 1)
       newItems.splice(targetIndex, 0, draggedItemData)
 
-      // Update sort order
+      // Update sort order locally
       const updatedItems = newItems.map((item, index) => ({
         ...item,
         sortOrder: index
@@ -160,6 +161,17 @@ export default function EditArtworkGrid() {
       setItems(updatedItems)
       setDraggedItem(null)
       setDragOverItem(null)
+
+      // Save to database
+      try {
+        await updateArtworkSortOrder(
+          updatedItems.map((item, index) => ({ id: item.id, sortOrder: index }))
+        )
+      } catch (error) {
+        console.error('Failed to save sort order:', error)
+        // Revert on failure
+        setItems(items)
+      }
     },
     [draggedItem, items]
   )
