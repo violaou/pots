@@ -1,5 +1,26 @@
 /**
- * Process files into image previews
+ * Check if a file is an allowed media type (image or video).
+ */
+export function isAllowedMediaFile(file: File): boolean {
+  return file.type.startsWith('image/') ||
+         file.type === 'video/mp4' ||
+         file.type === 'video/x-m4v'
+}
+
+/**
+ * Check if a file or URL is a video.
+ */
+export function isVideoFile(fileOrUrl: File | string): boolean {
+  if (typeof fileOrUrl === 'string') {
+    const ext = fileOrUrl.split('.').pop()?.toLowerCase()
+    return ext === 'mp4' || ext === 'm4v'
+  }
+  return fileOrUrl.type.startsWith('video/')
+}
+
+/**
+ * Process files into media previews (images and videos)
+ * Note: Videos cannot be hero images, so the first non-video image will be hero
  */
 export function processImageFiles<T>(
   files: FileList,
@@ -8,12 +29,16 @@ export function processImageFiles<T>(
   createPreview: (file: File, id: string, index: number, isFirstHero: boolean) => T
 ): T[] {
   const newImages: T[] = []
+  let heroAssigned = existingCount > 0 // Don't assign hero if there are existing images
 
   Array.from(files).forEach((file, index) => {
-    if (!file.type.startsWith('image/')) return
+    if (!isAllowedMediaFile(file)) return
 
     const id = `preview-${Date.now()}-${index}`
-    const isFirstHero = existingCount === 0 && index === 0
+    // Only assign hero to first non-video image when no existing images
+    const isFirstHero = !heroAssigned && !isVideoFile(file)
+    if (isFirstHero) heroAssigned = true
+
     newImages.push(createPreview(file, id, index, isFirstHero))
   })
 

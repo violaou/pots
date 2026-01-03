@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Upload, X } from 'lucide-react'
 
 import {
+  isVideoFile,
   processImageFiles,
   setHeroInArray,
   updateAltInArray
@@ -89,6 +90,36 @@ export function managedToImagePreviews(images: ManagedImage[]): ImagePreview[] {
       alt: img.alt,
       isHero: img.isHero
     }))
+}
+
+/**
+ * Renders a media thumbnail (image or video)
+ */
+function MediaThumbnail({ image }: { image: ManagedImage }) {
+  const isVideo = image.file
+    ? isVideoFile(image.file)
+    : isVideoFile(image.preview)
+
+  if (isVideo) {
+    return (
+      <video
+        src={image.preview}
+        className={styles.imageThumb}
+        loop
+        muted
+        autoPlay
+        playsInline
+      />
+    )
+  }
+
+  return (
+    <img
+      src={image.preview}
+      alt={image.alt || 'Image preview'}
+      className={styles.imageThumb}
+    />
+  )
 }
 
 /**
@@ -225,8 +256,12 @@ export default function ImageManagementSection({
       if (image.isNew) {
         const newImages = images.filter((img) => img.id !== imageId)
         if (image.isHero && newImages.length > 0) {
-          const firstActive = newImages.find((img) => !img.markedForDeletion)
-          if (firstActive) firstActive.isHero = true
+          // Find first active non-video image to be hero
+          const firstActiveImage = newImages.find(
+            (img) =>
+              !img.markedForDeletion && !isVideoFile(img.file ?? img.preview)
+          )
+          if (firstActiveImage) firstActiveImage.isHero = true
         }
         onImagesChange(newImages)
       } else {
@@ -325,7 +360,7 @@ export default function ImageManagementSection({
           id="image-management-upload"
           type="file"
           multiple
-          accept="image/*"
+          accept="image/*,video/mp4,video/x-m4v,.mp4,.m4v"
           onChange={handleFileInputChange}
           className={styles.fileInput}
           disabled={disabled}
@@ -348,28 +383,26 @@ export default function ImageManagementSection({
                 onDragOver={(e) => handleDragOverCard(e, index)}
                 onDragEnd={handleDragEnd}
               >
-                <img
-                  src={image.preview}
-                  alt={image.alt || 'Image preview'}
-                  className={styles.imageThumb}
-                />
+                <MediaThumbnail image={image} />
 
                 <ImageBadges image={image} />
 
-                {!isDeleted && !image.isHero && (
-                  <div className={styles.overlay}>
-                    <div className={styles.overlayActions}>
-                      <button
-                        type="button"
-                        onClick={() => setHeroImage(image.id)}
-                        className={styles.actionButton}
-                        disabled={disabled}
-                      >
-                        Set as Hero
-                      </button>
+                {!isDeleted &&
+                  !image.isHero &&
+                  !isVideoFile(image.file ?? image.preview) && (
+                    <div className={styles.overlay}>
+                      <div className={styles.overlayActions}>
+                        <button
+                          type="button"
+                          onClick={() => setHeroImage(image.id)}
+                          className={styles.actionButton}
+                          disabled={disabled}
+                        >
+                          Set as Hero
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {isDeleted && (
                   <div className={styles.overlayDeleted}>

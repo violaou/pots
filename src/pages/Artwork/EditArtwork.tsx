@@ -8,6 +8,7 @@ import {
   type ManagedImage
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
+import { isVideoFile } from '../../hooks/useImageUpload'
 import {
   getArtworkWithImages,
   updateArtwork,
@@ -102,12 +103,17 @@ export default function EditArtwork() {
       return
     }
 
-    // Ensure exactly one hero - auto-assign first active image if none
+    // Ensure exactly one hero - auto-assign first active non-video image if none
     const hasHero = activeImages.some((img) => img.isHero)
     if (!hasHero) {
-      const firstActiveIndex = images.findIndex((img) => !img.markedForDeletion)
-      if (firstActiveIndex !== -1) {
-        images[firstActiveIndex] = { ...images[firstActiveIndex], isHero: true }
+      const firstActiveImageIndex = images.findIndex(
+        (img) => !img.markedForDeletion && !isVideoFile(img.file ?? img.preview)
+      )
+      if (firstActiveImageIndex !== -1) {
+        images[firstActiveImageIndex] = {
+          ...images[firstActiveImageIndex],
+          isHero: true
+        }
       }
     }
 

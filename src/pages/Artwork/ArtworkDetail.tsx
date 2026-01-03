@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ConfirmationModal } from '../../components/ConfirmationModal'
 import { useAuth } from '../../contexts/AuthContext'
+import { isVideoFile } from '../../hooks/useImageUpload'
 import {
   deleteArtwork,
   getArtworkWithImages
@@ -21,6 +22,45 @@ function sortArtworkImages(images: ArtworkImage[]): ArtworkImage[] {
     if (!a.isHero && b.isHero) return 1
     return a.sortOrder - b.sortOrder
   })
+}
+
+/**
+ * Renders either an image or video element based on file type
+ */
+function MediaElement({
+  img,
+  className,
+  onLoad,
+  showControls = false
+}: {
+  img: ArtworkImage
+  className: string
+  onLoad?: () => void
+  showControls?: boolean
+}) {
+  if (isVideoFile(img.imageUrl)) {
+    return (
+      <video
+        src={img.imageUrl}
+        className={className}
+        loop
+        muted
+        autoPlay
+        playsInline
+        controls={showControls}
+        onLoadedData={onLoad}
+      />
+    )
+  }
+
+  return (
+    <img
+      src={img.imageUrl}
+      alt={img.alt ?? ''}
+      className={className}
+      onLoad={onLoad}
+    />
+  )
 }
 
 function ImageGallery({ images }: { images: ArtworkImage[] }) {
@@ -55,9 +95,8 @@ function ImageGallery({ images }: { images: ArtworkImage[] }) {
             className="aspect-square bg-neutral-100 dark:bg-neutral-800 cursor-pointer"
             onClick={() => setSelectedImage(img)}
           >
-            <img
-              src={img.imageUrl}
-              alt={img.alt ?? ''}
+            <MediaElement
+              img={img}
               className={`w-full h-full object-cover img-fade ${loadedImages.has(img.id) ? 'loaded' : ''}`}
               onLoad={() => handleImageLoad(img.id)}
             />
@@ -78,12 +117,13 @@ function ImageGallery({ images }: { images: ArtworkImage[] }) {
           >
             ×
           </button>
-          <img
-            src={selectedImage.imageUrl}
-            alt={selectedImage.alt ?? ''}
-            className="max-h-[90vh] max-w-[1000px] w-[80vw] object-contain bg-white"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div onClick={(e) => e.stopPropagation()}>
+            <MediaElement
+              img={selectedImage}
+              className="max-h-[90vh] max-w-[1000px] w-[80vw] object-contain bg-white"
+              showControls={isVideoFile(selectedImage.imageUrl)}
+            />
+          </div>
         </div>
       )}
     </>

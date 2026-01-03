@@ -129,19 +129,27 @@ async function realUpload(file: File, folder: AllowedFolder = 'artworks'): Promi
 // ============================================================================
 
 /**
- * Upload an image file to DigitalOcean Spaces.
+ * Check if a file is an allowed media type (image or video).
+ */
+function isAllowedMediaType(file: File): boolean {
+  return file.type.startsWith('image/') ||
+         file.type === 'video/mp4'
+}
+
+/**
+ * Upload a media file (image or video) to DigitalOcean Spaces.
  *
  * In development (mock mode), returns a blob URL for UI testing.
  * In production, uploads to DO Spaces and returns the CDN URL.
  *
- * @param file - The image file to upload
+ * @param file - The image or video file to upload
  * @param folder - The folder prefix for the upload ('artworks' or 'blog'). Defaults to 'artworks'.
- * @returns The CDN URL of the uploaded image
+ * @returns The CDN URL of the uploaded file
  * @throws Error if upload fails
  */
 export async function uploadImage(file: File, folder: AllowedFolder = 'artworks'): Promise<string> {
-  if (!file.type.startsWith('image/')) {
-    throw new Error('Only image files are allowed')
+  if (!isAllowedMediaType(file)) {
+    throw new Error('Only image and video files (mp4, m4v) are allowed')
   }
 
   if (shouldUseMockMode()) {

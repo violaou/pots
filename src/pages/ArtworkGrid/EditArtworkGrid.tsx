@@ -9,6 +9,7 @@ import {
   SpinnerIcon
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
+import { isVideoFile } from '../../hooks/useImageUpload'
 import {
   deleteArtwork,
   listAllArtworks,
