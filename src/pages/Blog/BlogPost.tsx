@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import Markdown from 'react-markdown'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { BackToBlog } from '../../components/BackToBlog'
 import { useAuth } from '../../contexts/AuthContext'
 import { deleteBlogPost, getBlogPost } from '../../services/blog-service'
 import { theme } from '../../styles/theme'
 import type { BlogPost } from '../../types'
-import { BackToBlog } from '../../components/BackToBlog'
 
 export default function BlogPostPage() {
   const { id } = useParams()
@@ -103,12 +104,8 @@ export default function BlogPostPage() {
             className="w-full max-h-[50vw] object-contain rounded-lg mb-6"
           />
         )}
-        <div className={theme.prose}>
-          {post.content.split('\n').map((paragraph, i) => (
-            <p key={i} className="mb-4">
-              {paragraph}
-            </p>
-          ))}
+        <div className="prose prose-neutral dark:prose-invert max-w-none">
+          <Markdown>{post.content}</Markdown>
         </div>
         {post.tags && (
           <div className="flex gap-2 mt-6">
