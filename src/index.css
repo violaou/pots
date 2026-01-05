@@ -22,6 +22,11 @@
     font-family: "Instrument Serif", serif;
   }
 
+  /* Buttons and links should not be text-selectable */
+  button, a {
+    user-select: none;
+  }
+
   h1 {
     font-size: 3rem; /* text-5xl */
     line-height: 1;

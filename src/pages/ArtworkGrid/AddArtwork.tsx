@@ -23,8 +23,7 @@ const artworkSchema = z.object({
   materials: z.string().optional(),
   clay: z.string().optional(),
   cone: z.union([z.string(), z.number()]).optional(),
-  isMicrowaveSafe: z.boolean(),
-  altText: z.string().optional()
+  isMicrowaveSafe: z.boolean()
 })
 
 type ArtworkFormData = z.infer<typeof artworkSchema>
@@ -43,8 +42,7 @@ export default function AddArtwork() {
       materials: '',
       clay: '',
       cone: '',
-      isMicrowaveSafe: true,
-      altText: ''
+      isMicrowaveSafe: true
     }
   })
 
@@ -110,7 +108,6 @@ export default function AddArtwork() {
         clay: data.clay,
         cone: typeof data.cone === 'number' ? String(data.cone) : data.cone,
         isMicrowaveSafe: data.isMicrowaveSafe,
-        altText: data.altText,
         images: uploadedImages
       })
 
@@ -268,25 +265,6 @@ export default function AddArtwork() {
                   Microwave safe
                 </span>
               </label>
-            </div>
-          </div>
-
-          <div className={theme.section}>
-            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
-              Accessibility
-            </h2>
-
-            <div className={theme.form.group}>
-              <label htmlFor="altText" className={theme.form.labelRequired}>
-                Alt Text
-              </label>
-              <input
-                id="altText"
-                type="text"
-                {...register('altText')}
-                className={theme.form.input}
-                placeholder="Describe the artwork for screen readers"
-              />
             </div>
           </div>
 

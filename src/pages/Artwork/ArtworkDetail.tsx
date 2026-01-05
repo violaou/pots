@@ -92,7 +92,7 @@ function ImageGallery({ images }: { images: ArtworkImage[] }) {
         {ordered.map((img) => (
           <div
             key={img.id}
-            className="aspect-square bg-neutral-100 dark:bg-neutral-800 cursor-pointer"
+            className="aspect-square cursor-pointer"
             onClick={() => setSelectedImage(img)}
           >
             <MediaElement
@@ -120,7 +120,7 @@ function ImageGallery({ images }: { images: ArtworkImage[] }) {
           <div onClick={(e) => e.stopPropagation()}>
             <MediaElement
               img={selectedImage}
-              className="max-h-[90vh] max-w-[1000px] w-[80vw] object-contain bg-white"
+              className="max-h-[90vh] max-w-[1000px] w-[80vw] object-contain"
               showControls={isVideoFile(selectedImage.imageUrl)}
             />
           </div>

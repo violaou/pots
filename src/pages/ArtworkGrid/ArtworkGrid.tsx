@@ -11,18 +11,24 @@ import type { ArtworkListItem } from '../../types'
 const GAP = 16 // gap-4 = 16px
 const PADDING = 16 // p-4 = 16px
 
-// Calculate card size and columns based on viewport width
 function getGridConfig(containerWidth: number) {
+  // Calculate card size and columns based on viewport width
+  // Always show minimum 2 columns
+  const availableWidth = containerWidth - PADDING * 2
+  const minColumns = 2
+
   let cardSize: number
   if (containerWidth >= 1600) cardSize = 500
   else if (containerWidth >= 1200) cardSize = 400
   else if (containerWidth >= 900) cardSize = 350
   else if (containerWidth >= 600) cardSize = 300
-  else cardSize = Math.min((containerWidth - GAP) / 2, 300)
+  else {
+    // For narrow screens, calculate card size to fit 2 columns
+    cardSize = Math.floor((availableWidth - GAP) / minColumns)
+  }
 
-  const availableWidth = containerWidth - PADDING * 2
   const columns = Math.max(
-    1,
+    minColumns,
     Math.floor((availableWidth + GAP) / (cardSize + GAP))
   )
 
@@ -72,7 +78,7 @@ function ArtworkCard({
       className="absolute top-0 left-0 group"
     >
       <Link to={`/gallery/${artwork.slug}`} className="block w-full h-full">
-        <div className="w-full h-full overflow-hidden bg-white rounded-lg">
+        <div className="w-full h-full overflow-hidden rounded-lg">
           <img
             ref={handleImageRef}
             src={artwork.heroImageUrl}

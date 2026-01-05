@@ -5,15 +5,15 @@ import { useAuth, useLogout } from '../contexts/AuthContext'
 import { Logo, NavActions, NavLinks, ThemeToggle } from './nav'
 
 const styles = {
-  header: 'fixed top-0 left-0 right-0 h-16 z-10 lg:hidden',
+  header: 'fixed top-0 left-0 right-0 h-16 z-10 lg:hidden select-none',
   headerInner: 'h-full px-4 flex items-center justify-between',
   iconButton:
-    'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 focus:outline-none',
+    'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 focus:outline-none select-none',
   menuTitle: 'text-xl font-medium text-gray-900 dark:text-gray-100',
   overlay:
     'fixed inset-0 bg-black transition-opacity duration-300 ease-in-out lg:hidden',
   slideMenu:
-    'fixed top-0 bottom-0 right-0 w-64 bg-white dark:bg-neutral-900 shadow-lg z-50 transform transition-transform duration-300 ease-in-out lg:hidden'
+    'fixed top-0 bottom-0 right-0 w-64 bg-white dark:bg-neutral-900 shadow-lg z-50 transform transition-transform duration-300 ease-in-out lg:hidden select-none'
 } as const
 
 export function TopBar() {
