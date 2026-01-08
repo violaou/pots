@@ -9,9 +9,15 @@ import {
 
 export const THEME_LIGHT = 'light'
 export const THEME_DARK = 'dark'
-const STORAGE_KEY = 'theme'
+const STORAGE_KEY = 'theme-preference'
+const PREFERENCE_TTL_MS = (60 * 60 * 1000) / 2 // 30 minutes
 
 type Theme = typeof THEME_LIGHT | typeof THEME_DARK
+
+interface StoredPreference {
+  isDark: boolean
+  timestamp: number
+}
 
 interface ThemeContextValue {
   theme: Theme
@@ -26,12 +32,31 @@ function getSystemIsDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
-function getStoredIsDark(): boolean | null {
+function getStoredPreference(): StoredPreference | null {
   if (typeof window === 'undefined') return null
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === THEME_DARK) return true
-  if (stored === THEME_LIGHT) return false
-  return null
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return null
+    return JSON.parse(stored) as StoredPreference
+  } catch {
+    return null
+  }
+}
+
+function isPreferenceExpired(preference: StoredPreference): boolean {
+  return Date.now() - preference.timestamp > PREFERENCE_TTL_MS
+}
+
+function getStoredIsDark(): boolean | null {
+  const preference = getStoredPreference()
+  if (!preference) return null
+  if (isPreferenceExpired(preference)) return null
+  return preference.isDark
+}
+
+function savePreference(isDark: boolean) {
+  const preference: StoredPreference = { isDark, timestamp: Date.now() }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(preference))
 }
 
 function applyTheme(isDark: boolean) {
@@ -65,7 +90,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = useCallback(() => {
     setIsDark((prev) => {
       const next = !prev
-      localStorage.setItem(STORAGE_KEY, next ? THEME_DARK : THEME_LIGHT)
+      savePreference(next)
       return next
     })
   }, [])

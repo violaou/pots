@@ -15,10 +15,10 @@ export function Logo({
     <Link to="/" className="flex items-center gap-3">
       <img
         src={violaPotsLogo}
-        alt="Viola Pots"
+        alt="Viola Ou Logo"
         className={`${imageSize} object-contain`}
       />
-      <span className={textClassName}>Viola Pots</span>
+      <span className={textClassName}>Viola Ou</span>
     </Link>
   )
 }
