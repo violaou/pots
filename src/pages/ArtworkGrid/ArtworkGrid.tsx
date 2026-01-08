@@ -82,14 +82,20 @@ function ArtworkCard({
       className="absolute top-0 left-0 group"
     >
       <Link to={`/gallery/${artwork.slug}`} className="block w-full h-full">
-        <div className="w-full h-full overflow-hidden rounded-lg">
+        <div className="w-full h-full overflow-hidden rounded-lg relative">
           <img
             ref={handleImageRef}
             src={artwork.heroImageUrl}
             alt={artwork.title}
-            className={`${theme.image.cover} transition-transform duration-300 hover:scale-105`}
+            className={`${theme.image.cover} transition-transform duration-300 group-hover:scale-105`}
             onLoad={() => setIsLoaded(true)}
           />
+          {/* Title overlay */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2 pt-6">
+            <h3 className="text-white text-sm font-medium truncate drop-shadow-sm">
+              {artwork.title}
+            </h3>
+          </div>
         </div>
       </Link>
       {isAdmin && (

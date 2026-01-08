@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react'
 import { useAuth, useLogout } from '../contexts/AuthContext'
 import { Logo, NavActions, NavLinks, ThemeToggle } from './nav'
 
+const HEADER_HEIGHT = 64
+
 const styles = {
-  header: 'fixed top-0 left-0 right-0 h-16 z-10 lg:hidden select-none',
+  header:
+    'fixed top-0 left-0 right-0 h-16 z-10 lg:hidden select-none backdrop-blur-md transition-[background-color] duration-150',
   headerInner: 'h-full px-4 flex items-center justify-between',
   iconButton:
     'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 focus:outline-none select-none',
@@ -18,10 +21,24 @@ const styles = {
 
 export function TopBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [bgOpacity, setBgOpacity] = useState(0)
   const { isAuthenticated } = useAuth()
   const handleLogout = useLogout()
 
   const closeMenu = () => setIsMenuOpen(false)
+
+  // Track scroll for background opacity
+  useEffect(() => {
+    function handleScroll() {
+      const scrollY = window.scrollY
+      // Fade in as user scrolls past header height
+      const opacity = Math.min(scrollY / HEADER_HEIGHT, 1)
+      setBgOpacity(opacity)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     const mainContent = document.getElementById('main-content')
@@ -39,9 +56,17 @@ export function TopBar() {
     }
   }, [isMenuOpen])
 
+  // Calculate the actual opacity (0 to max-opacity)
+  const currentOpacity = bgOpacity * 0.4
+
   return (
     <>
-      <header className={styles.header}>
+      <header
+        className={styles.header}
+        style={{
+          backgroundColor: `rgba(var(--topbar-overlay-color), ${currentOpacity})`
+        }}
+      >
         <div className={styles.headerInner}>
           <Logo />
 

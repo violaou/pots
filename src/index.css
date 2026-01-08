@@ -4,6 +4,11 @@
 @tailwind utilities;
 
 
+:root {
+  --topbar-overlay-color: 0, 0, 0;
+  --topbar-overlay-max-opacity: 0.4;
+}
+
 @layer base {
   body {
     font-family: "Instrument Serif", serif, sans-serif;
