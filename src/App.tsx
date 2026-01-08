@@ -24,7 +24,9 @@ import {
   BlogPost,
   BlogPostForm,
   EditArtwork,
-  EditArtworkGrid
+  EditArtworkGrid,
+  FAQ,
+  EditFAQ
 } from './pages'
 
 const isDev = import.meta.env.DEV
@@ -110,6 +112,17 @@ function App() {
                       }
                     />
                     <Route path="/blog/:id" element={<BlogPost />} />
+
+                    {/* FAQ routes */}
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route
+                      path="/faq/edit"
+                      element={
+                        <ProtectedRoute adminOnly>
+                          <EditFAQ />
+                        </ProtectedRoute>
+                      }
+                    />
                   </Routes>
                 </PageTransition>
               </div>

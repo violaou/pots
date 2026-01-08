@@ -24,6 +24,12 @@ export { saveArtworkImages } from './images'
 export * from './types'
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const PAGE_SIZE = 12
+
+// ============================================================================
 // List Artworks
 // ============================================================================
 
@@ -69,6 +75,67 @@ export async function listArtworks(): Promise<ArtworkListItem[]> {
   }
 
   return []
+}
+
+/**
+ * Result from paginated artwork list query.
+ */
+export interface PaginatedArtworksResult {
+  items: ArtworkListItem[]
+  hasMore: boolean
+  nextOffset: number
+}
+
+/**
+ * List artworks with pagination support.
+ * Uses offset-based pagination with Supabase's .range().
+ */
+export async function listArtworksPaginated(
+  offset = 0,
+  limit = PAGE_SIZE
+): Promise<PaginatedArtworksResult> {
+  try {
+    const { data, error, count } = await supabase
+      .from('artworks')
+      .select(`
+        id,
+        slug,
+        title,
+        sort_order,
+        artwork_images!inner (
+          image_url,
+          is_hero
+        )
+      `, { count: 'exact' })
+      .eq('is_published', true)
+      .eq('artwork_images.is_hero', true)
+      .order('sort_order')
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      console.warn('[artwork-service] listArtworksPaginated failed:', error)
+      return { items: [], hasMore: false, nextOffset: offset }
+    }
+
+    const items: ArtworkListItem[] = (data || []).map((item) => ({
+      id: item.id,
+      slug: item.slug,
+      title: item.title,
+      heroImageUrl: Array.isArray(item.artwork_images)
+        ? item.artwork_images[0]?.image_url || ''
+        : '',
+      isPublished: true
+    }))
+
+    const totalCount = count ?? 0
+    const nextOffset = offset + items.length
+    const hasMore = nextOffset < totalCount
+
+    return { items, hasMore, nextOffset }
+  } catch (error) {
+    console.warn('[artwork-service] listArtworksPaginated failed:', error)
+    return { items: [], hasMore: false, nextOffset: offset }
+  }
 }
 
 /**

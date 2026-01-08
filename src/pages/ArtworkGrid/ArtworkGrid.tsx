@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { SettingsIcon } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
-import { listArtworks } from '../../services/artwork-service/index'
+import { listArtworksPaginated } from '../../services/artwork-service/index'
 import { theme } from '../../styles/theme'
 import type { ArtworkListItem } from '../../types'
 
@@ -37,14 +37,14 @@ function getGridConfig(containerWidth: number) {
 
 function ArtworkCard({
   artwork,
-  index,
+  animationIndex,
   isAdmin,
   size,
   x,
   y
 }: {
   artwork: ArtworkListItem
-  index: number
+  animationIndex: number // Index relative to when item was loaded (for stagger animation)
   isAdmin: boolean
   size: number
   x: number
@@ -55,6 +55,10 @@ function ArtworkCard({
   const handleImageRef = (img: HTMLImageElement | null) => {
     if (img?.complete && !isLoaded) setIsLoaded(true)
   }
+
+  // Only apply stagger delay for newly loaded items (animationIndex >= 0)
+  // Items from previous loads get animationIndex < 0 and no delay
+  const staggerDelay = animationIndex >= 0 ? animationIndex * 0.05 : 0
 
   return (
     <motion.div
@@ -68,8 +72,8 @@ function ArtworkCard({
         height: size
       }}
       transition={{
-        opacity: { duration: 0.4, delay: index * 0.05 },
-        scale: { duration: 0.4, delay: index * 0.05 },
+        opacity: { duration: 0.4, delay: staggerDelay },
+        scale: { duration: 0.4, delay: staggerDelay },
         x: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
         y: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
         width: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
@@ -103,22 +107,72 @@ function ArtworkCard({
 export default function ArtworkGrid() {
   const [items, setItems] = useState<ArtworkListItem[]>([])
   const [containerWidth, setContainerWidth] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [nextOffset, setNextOffset] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadedCount, setLoadedCount] = useState(0) // Track how many items were in previous loads for animation offset
   const containerRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const isLoadingRef = useRef(false) // Ref to guard against race conditions
+  const initialLoadDone = useRef(false) // Track if initial load completed
   const { isAdmin } = useAuth()
 
-  useEffect(() => {
-    let isMounted = true
-    listArtworks()
-      .then((data) => {
-        if (isMounted) setItems(data)
+  const loadMore = useCallback(async () => {
+    // Use ref to guard against duplicate calls from race conditions
+    if (isLoadingRef.current || !hasMore) return
+
+    isLoadingRef.current = true
+    setIsLoading(true)
+    try {
+      const result = await listArtworksPaginated(nextOffset)
+      setItems((prev) => {
+        setLoadedCount(prev.length) // Store current count before adding new items
+        return [...prev, ...result.items]
       })
-      .catch((err) => {
-        console.error('[ArtworkGrid] Failed to load artworks:', err)
-      })
-    return () => {
-      isMounted = false
+      setHasMore(result.hasMore)
+      setNextOffset(result.nextOffset)
+    } catch (err) {
+      console.error('[ArtworkGrid] Failed to load artworks:', err)
+    } finally {
+      isLoadingRef.current = false
+      setIsLoading(false)
     }
+  }, [nextOffset, hasMore])
+
+  // Initial load
+  useEffect(() => {
+    loadMore().then(() => {
+      // Small delay to let the grid render before enabling observer-triggered loads
+      setTimeout(() => {
+        initialLoadDone.current = true
+      }, 100)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Infinite scroll with Intersection Observer
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Only trigger loads after initial load is complete
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !isLoading &&
+          initialLoadDone.current
+        ) {
+          loadMore()
+        }
+      },
+      { threshold: 0.1 } // Trigger when sentinel is 10% visible (no rootMargin to prevent eager loading)
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, isLoading, loadMore])
 
   // Measure actual container width
   useEffect(() => {
@@ -178,13 +232,20 @@ export default function ArtworkGrid() {
             <ArtworkCard
               key={artwork.id}
               artwork={artwork}
-              index={index}
+              animationIndex={index - loadedCount} // Negative for old items, 0+ for new items
               isAdmin={isAdmin}
               size={cardSize}
               x={positions[index]?.x ?? 0}
               y={positions[index]?.y ?? 0}
             />
           ))}
+        </div>
+      )}
+      {/* Sentinel element for infinite scroll */}
+      <div ref={sentinelRef} className="h-4" />
+      {isLoading && (
+        <div className="flex justify-center py-8">
+          <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin opacity-50" />
         </div>
       )}
     </div>
