@@ -91,8 +91,8 @@ function ArtworkCard({
             onLoad={() => setIsLoaded(true)}
           />
           {/* Title overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2 pt-6">
-            <h3 className="text-white text-sm font-medium truncate drop-shadow-sm">
+          <div className="absolute bottom-0 left-0 right-0 backdrop-blur-sm bg-white/60 dark:bg-transparent dark:backdrop-blur-none dark:bg-gradient-to-t dark:from-black/60 dark:to-transparent px-3 py-2">
+            <h3 className="text-gray-800 dark:text-white text-sm font-medium truncate dark:drop-shadow-sm">
               {artwork.title}
             </h3>
           </div>

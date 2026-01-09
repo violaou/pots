@@ -5,6 +5,11 @@
 
 
 :root {
+  --topbar-overlay-color: 255, 255, 255;
+  --topbar-overlay-max-opacity: 0.6;
+}
+
+.dark {
   --topbar-overlay-color: 0, 0, 0;
   --topbar-overlay-max-opacity: 0.4;
 }

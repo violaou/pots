@@ -8,7 +8,7 @@ const HEADER_HEIGHT = 64
 
 const styles = {
   header:
-    'fixed top-0 left-0 right-0 h-16 z-10 lg:hidden select-none backdrop-blur-md transition-[background-color] duration-150',
+    'fixed top-0 left-0 right-0 h-16 z-10 lg:hidden select-none backdrop-blur-sm dark:backdrop-blur-md transition-[background-color] duration-150',
   headerInner: 'h-full px-4 flex items-center justify-between',
   iconButton:
     'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 focus:outline-none select-none',
@@ -56,8 +56,11 @@ export function TopBar() {
     }
   }, [isMenuOpen])
 
-  // Calculate the actual opacity (0 to max-opacity)
-  const currentOpacity = bgOpacity * 0.4
+  // Calculate the actual opacity (0 to max-opacity based on theme)
+  // Light mode uses 0.6 max, dark mode uses 0.4 max (matches CSS tokens)
+  const isDark = document.documentElement.classList.contains('dark')
+  const maxOpacity = isDark ? 0.4 : 0.6
+  const currentOpacity = bgOpacity * maxOpacity
 
   return (
     <>
