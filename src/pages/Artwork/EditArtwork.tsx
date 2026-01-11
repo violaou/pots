@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import {
   ImageManagementSection,
+  MarkdownEditor,
   artworkImagesToManaged,
   type ManagedImage
 } from '../../components'
@@ -301,13 +302,13 @@ export default function EditArtwork() {
 
             <div className={theme.form.group}>
               <label className={theme.form.label}>Description</label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={onChange}
-                className={theme.form.textarea}
-                rows={4}
+              <MarkdownEditor
+                value={form.description ?? ''}
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, description: value }))
+                }
                 disabled={submitting}
+                minHeight="200px"
               />
             </div>
           </div>

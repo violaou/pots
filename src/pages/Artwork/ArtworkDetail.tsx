@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Markdown from 'react-markdown'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ConfirmationModal } from '../../components/ConfirmationModal'
@@ -227,7 +228,9 @@ export function ArtworkDetail() {
               )}
 
               {artwork.description && (
-                <p className={theme.text.muted}>{artwork.description}</p>
+                <div className="prose prose-neutral dark:prose-invert max-w-none prose-sm">
+                  <Markdown>{artwork.description}</Markdown>
+                </div>
               )}
             </div>
 

@@ -23,8 +23,6 @@ export function About() {
 
   return (
     <div className={theme.layout.container}>
-      <h1 className={theme.text.h1}>About</h1>
-
       <div className="mb-12">
         {latestArtworks.length > 0 && (
           <div className="flex mb-8">
@@ -43,7 +41,7 @@ export function About() {
             ))}
           </div>
         )}
-        <h2 className={theme.text.h2}>Hi there! 👋 I'm Viola</h2>
+        <h1 className={theme.text.h1}>Hi there!👋 I'm Viola</h1>
         <p className={`${theme.text.body} mb-4`}>
           I'm a ceramic artist based in Toronto, Canada, specializing in
           handcrafted pottery that combines my background in painting with

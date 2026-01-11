@@ -8,5 +8,6 @@ export {
   imagePreviewsToManaged,
   type ManagedImage,
   managedToImagePreviews} from './ImageManagementSection'
+export { MarkdownEditor } from './MarkdownEditor'
 export { default as Sidebar } from './Sidebar'
 export { TopBar } from './TopBar'

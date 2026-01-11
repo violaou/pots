@@ -48,7 +48,7 @@ export const theme = {
 
   // Section/card patterns
   section:
-    'bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6',
+    'bg-white dark:bg-neutral-800 rounded-lg p-6',
 
   // Form elements
   form: {

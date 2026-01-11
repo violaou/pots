@@ -1,6 +1,8 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { BackToBlog } from '../../components/BackToBlog'
+import { MarkdownEditor } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   createBlogPost,
@@ -11,7 +13,6 @@ import {
 import { uploadImage } from '../../services/s3-upload'
 import { theme } from '../../styles/theme'
 import type { BlogPost } from '../../types'
-import { BackToBlog } from '../../components/BackToBlog'
 
 // File input has special styling that doesn't fit theme well
 const fileInputStyles = `mt-1 block w-full text-sm ${theme.text.muted}
@@ -177,15 +178,13 @@ export default function BlogPostForm() {
             <label htmlFor="content" className={theme.form.labelRequired}>
               Content
             </label>
-            <textarea
-              id="content"
-              name="content"
+            <MarkdownEditor
               value={formData.content}
-              onChange={handleChange}
-              rows={10}
-              className={theme.form.textarea}
-              required
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, content: value }))
+              }
               disabled={saving}
+              minHeight="400px"
             />
           </div>
 
