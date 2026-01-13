@@ -209,6 +209,9 @@ export function ArtworkDetail() {
               <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
                 {artwork.title}
               </h1>
+              <span className={theme.text.subtle}>
+                {artwork.creationYear ? `${artwork.creationYear}` : ''}
+              </span>
 
               {isAdmin && (
                 <div className="flex items-center gap-3">
@@ -233,20 +236,6 @@ export function ArtworkDetail() {
                 </div>
               )}
             </div>
-
-            {(artwork.materials || typeof artwork.cone === 'number') && (
-              <div className="md:fixed md:bottom-8 md:w-80 space-y-2 mt-8 md:mt-0">
-                {artwork.materials && (
-                  <DetailRow label="Materials" value={artwork.materials} />
-                )}
-                {typeof artwork.cone === 'number' && (
-                  <DetailRow
-                    label="Firing Cone"
-                    value={`cone ${artwork.cone}`}
-                  />
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>

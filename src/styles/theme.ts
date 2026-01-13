@@ -53,6 +53,7 @@ export const theme = {
   // Form elements
   form: {
     group: 'space-y-2',
+    inlineGroup: 'space-y-2 flex items-center',
     label: 'block text-sm text-neutral-600 dark:text-neutral-400 mb-1',
     labelRequired: 'block text-sm font-medium text-gray-700 dark:text-gray-300',
     input:

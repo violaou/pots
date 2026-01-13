@@ -3,192 +3,24 @@ import { toSlug } from '../../utils/slug'
 import {
   clearListCache,
   getDetailCache,
-  getListCache,
   prependToListCache,
   removeFromDetailCache,
   removeFromListCache,
   requireAdmin,
   setDetailCache,
-  setListCache,
-  updateListCacheItem} from './cache'
+  updateListCacheItem
+} from './cache'
 import type {
   Artwork,
   ArtworkImage,
-  ArtworkListItem,
   ArtworkUpdateInput,
   CreateArtworkInput
 } from './types'
 
-// Re-export types and image operations
 export { saveArtworkImages } from './images'
+export * from './listArtworks'
+export * from './tagManagement'
 export * from './types'
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-const PAGE_SIZE = 12
-
-// ============================================================================
-// List Artworks
-// ============================================================================
-
-export async function listArtworks(): Promise<ArtworkListItem[]> {
-  const cached = getListCache()
-  if (cached) return cached
-
-  try {
-    const { data, error } = await supabase
-      .from('artworks')
-      .select(`
-        id,
-        slug,
-        title,
-        sort_order,
-        artwork_images!inner (
-          image_url,
-          is_hero
-        )
-      `)
-      .eq('is_published', true)
-      .eq('artwork_images.is_hero', true)
-      .order('sort_order')
-
-    if (!error && data) {
-      const list: ArtworkListItem[] = data.map((item) => ({
-        id: item.id,
-        slug: item.slug,
-        title: item.title,
-        heroImageUrl: Array.isArray(item.artwork_images)
-          ? item.artwork_images[0]?.image_url || ''
-          : '',
-        isPublished: true
-      }))
-      // Only cache non-empty results to avoid caching failed queries
-      if (list.length > 0) {
-        setListCache(list)
-      }
-      return list
-    }
-  } catch (error) {
-    console.warn('[artwork-service] listArtworks failed:', error)
-  }
-
-  return []
-}
-
-/**
- * Result from paginated artwork list query.
- */
-export interface PaginatedArtworksResult {
-  items: ArtworkListItem[]
-  hasMore: boolean
-  nextOffset: number
-}
-
-/**
- * List artworks with pagination support.
- * Uses offset-based pagination with Supabase's .range().
- */
-export async function listArtworksPaginated(
-  offset = 0,
-  limit = PAGE_SIZE
-): Promise<PaginatedArtworksResult> {
-  try {
-    const { data, error, count } = await supabase
-      .from('artworks')
-      .select(`
-        id,
-        slug,
-        title,
-        sort_order,
-        artwork_images!inner (
-          image_url,
-          is_hero
-        )
-      `, { count: 'exact' })
-      .eq('is_published', true)
-      .eq('artwork_images.is_hero', true)
-      .order('sort_order')
-      .range(offset, offset + limit - 1)
-
-    if (error) {
-      console.warn('[artwork-service] listArtworksPaginated failed:', error)
-      return { items: [], hasMore: false, nextOffset: offset }
-    }
-
-    const items: ArtworkListItem[] = (data || []).map((item) => ({
-      id: item.id,
-      slug: item.slug,
-      title: item.title,
-      heroImageUrl: Array.isArray(item.artwork_images)
-        ? item.artwork_images[0]?.image_url || ''
-        : '',
-      isPublished: true
-    }))
-
-    const totalCount = count ?? 0
-    const nextOffset = offset + items.length
-    const hasMore = nextOffset < totalCount
-
-    return { items, hasMore, nextOffset }
-  } catch (error) {
-    console.warn('[artwork-service] listArtworksPaginated failed:', error)
-    return { items: [], hasMore: false, nextOffset: offset }
-  }
-}
-
-/**
- * List all artworks including unpublished (admin only).
- * Does not use cache since it includes unpublished items.
- * Ordered by sort_order for manual ordering.
- */
-export async function listAllArtworks(): Promise<ArtworkListItem[]> {
-  await requireAdmin()
-
-  try {
-    const { data, error } = await supabase
-      .from('artworks')
-      .select(`
-        id,
-        slug,
-        title,
-        is_published,
-        sort_order,
-        artwork_images (
-          image_url,
-          is_hero
-        )
-      `)
-      .order('sort_order', { ascending: true })
-
-    if (error) {
-      console.error('[artwork-service] listAllArtworks query error:', error)
-      return []
-    }
-
-    if (data) {
-      return data
-        .filter((item) => item.artwork_images && item.artwork_images.length > 0)
-        .map((item) => {
-          // Find hero image or fallback to first image
-          const images = item.artwork_images as { image_url: string; is_hero: boolean }[]
-          const heroImage = images.find((img) => img.is_hero) || images[0]
-          return {
-            id: item.id,
-            slug: item.slug,
-            title: item.title,
-            heroImageUrl: heroImage?.image_url || '',
-            isPublished: item.is_published
-          }
-        })
-    }
-  } catch (error) {
-    console.warn('[artwork-service] listAllArtworks failed:', error)
-  }
-
-  return []
-}
 
 // ============================================================================
 // Get Artwork Detail
@@ -231,12 +63,8 @@ export async function getArtworkWithImages(slug: string): Promise<Artwork | null
       slug: artworkData.slug,
       title: artworkData.title,
       description: artworkData.description,
-      materials: undefined,
-      clay: artworkData.clay,
-      cone: artworkData.cone ? parseInt(artworkData.cone.replace(/\D/g, ''), 10) : undefined,
-      isMicrowaveSafe: artworkData.is_microwave_safe,
+      creationYear: artworkData.creation_year,
       isPublished: artworkData.is_published,
-      altText: undefined,
       createdAt: artworkData.created_at,
       updatedAt: artworkData.updated_at,
       images
@@ -266,9 +94,7 @@ export async function createArtwork(input: CreateArtworkInput): Promise<Artwork>
       slug,
       title: input.title,
       description: input.description || null,
-      clay: input.clay || 'stoneware',
-      cone: input.cone || 'cone 6',
-      is_microwave_safe: input.isMicrowaveSafe,
+      creation_year: input.creationYear ? parseInt(String(input.creationYear), 10) : null,
       is_published: true
     })
     .select()
@@ -315,12 +141,8 @@ export async function createArtwork(input: CreateArtworkInput): Promise<Artwork>
     slug: artworkData.slug,
     title: artworkData.title,
     description: artworkData.description,
-    materials: input.materials,
-    clay: artworkData.clay,
-    cone: artworkData.cone ? parseInt(artworkData.cone.replace(/\D/g, ''), 10) : undefined,
-    isMicrowaveSafe: artworkData.is_microwave_safe,
+    creationYear: artworkData.creation_year,
     isPublished: artworkData.is_published,
-    altText: input.altText,
     createdAt: artworkData.created_at,
     updatedAt: artworkData.updated_at,
     images
@@ -358,12 +180,6 @@ export async function updateArtwork(
       ...prevDetail,
       title: updates.title ?? prevDetail.title,
       description: updates.description ?? prevDetail.description,
-      clay: updates.clay ?? prevDetail.clay,
-      cone: normalizeCone(updates.cone, prevDetail.cone),
-      isMicrowaveSafe:
-        typeof updates.isMicrowaveSafe === 'boolean'
-          ? updates.isMicrowaveSafe
-          : prevDetail.isMicrowaveSafe,
       updatedAt: new Date().toISOString()
     }
     setDetailCache(slug, optimistic)
@@ -377,13 +193,7 @@ export async function updateArtwork(
     const payload: Record<string, unknown> = {}
     if ('title' in updates) payload.title = updates.title
     if ('description' in updates) payload.description = updates.description
-    if ('clay' in updates) payload.clay = updates.clay
-    if ('cone' in updates) {
-      payload.cone = typeof updates.cone === 'number'
-        ? `cone ${updates.cone}`
-        : updates.cone
-    }
-    if ('isMicrowaveSafe' in updates) payload.is_microwave_safe = updates.isMicrowaveSafe
+    if ('creationYear' in updates) payload.creation_year = updates.creationYear ? parseInt(String(updates.creationYear), 10) : null
     if ('isPublished' in updates) payload.is_published = updates.isPublished
 
     const { error } = await supabase
@@ -479,16 +289,5 @@ export async function deleteArtwork(slug: string): Promise<void> {
 // Helpers
 // ============================================================================
 
-function normalizeCone(
-  next: string | number | undefined,
-  fallback: number | undefined
-): number | undefined {
-  if (typeof next === 'number') return next
-  if (typeof next === 'string') {
-    const match = next.match(/(-?\d+(?:\.\d+)?)/)
-    const parsed = match ? Number(match[1]) : Number(next)
-    return Number.isFinite(parsed) ? parsed : fallback
-  }
-  return fallback
-}
+
 

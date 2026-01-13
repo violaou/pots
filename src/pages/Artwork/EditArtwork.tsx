@@ -22,10 +22,8 @@ import type { Artwork } from '../../types'
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().optional(),
-  clay: z.string().optional(),
-  cone: z.union([z.string(), z.number()]).optional(),
-  isMicrowaveSafe: z.boolean().default(true),
-  isPublished: z.boolean().default(true)
+  creationYear: z.string().optional(),
+  isPublished: z.boolean()
 })
 
 export default function EditArtwork() {
@@ -37,14 +35,12 @@ export default function EditArtwork() {
   const [form, setForm] = useState<z.infer<typeof formSchema>>({
     title: '',
     description: '',
-    clay: 'stoneware',
-    cone: 'cone 6',
-    isMicrowaveSafe: true,
+    creationYear: '',
     isPublished: true
   })
   const [images, setImages] = useState<ManagedImage[]>([])
   const [originalImages, setOriginalImages] = useState<ManagedImage[]>([])
-  const [submitting, setSubmitting] = useState(false)
+  const [isSubmitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState<string>('')
 
@@ -60,9 +56,6 @@ export default function EditArtwork() {
         setForm({
           title: data.title,
           description: data.description ?? '',
-          clay: data.clay ?? 'stoneware',
-          cone: data.cone ?? 'cone 6',
-          isMicrowaveSafe: data.isMicrowaveSafe,
           isPublished: data.isPublished
         })
         const managedImages = artworkImagesToManaged(data.images)
@@ -266,51 +259,92 @@ export default function EditArtwork() {
           <div className={`mb-4 text-sm ${theme.text.error}`}>{error}</div>
         )}
 
-        <form className="space-y-6" onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} className="space-y-6">
           <div className={theme.section}>
-            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
-              Images
-            </h2>
             {isUsingMockUpload && (
               <div className={`mb-4 ${theme.alert.warning}`}>
                 <strong>Dev Mode:</strong> New images will use local blob URLs
-                (not persisted).
+                (not persisted). Set{' '}
+                <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">
+                  VITE_USE_REAL_UPLOAD=true
+                </code>{' '}
+                for real uploads.
               </div>
             )}
             <ImageManagementSection
               images={images}
               onImagesChange={setImages}
-              disabled={submitting}
+              disabled={isSubmitting}
             />
           </div>
 
+          {/* Basic Information */}
           <div className={theme.section}>
             <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
               Basic Information
             </h2>
 
-            <div className={theme.form.group}>
-              <label className={theme.form.label}>Title</label>
+            <div className={theme.form.inlineGroup}>
+              <label
+                htmlFor="title"
+                className={theme.form.label}
+                style={{ marginRight: '1rem', minWidth: '80px' }}
+              >
+                Title
+              </label>
               <input
                 name="title"
                 value={form.title}
                 onChange={onChange}
                 className={theme.form.input}
-                disabled={submitting}
+                disabled={isSubmitting}
               />
             </div>
 
-            <div className={theme.form.group}>
-              <label className={theme.form.label}>Description</label>
-              <MarkdownEditor
-                value={form.description ?? ''}
-                onChange={(value) =>
-                  setForm((prev) => ({ ...prev, description: value }))
-                }
-                disabled={submitting}
-                minHeight="200px"
+            <div className={theme.form.inlineGroup}>
+              <label
+                htmlFor="creationYear"
+                className={theme.form.label}
+                style={{ marginRight: '1rem', minWidth: '80px' }}
+              >
+                Year
+              </label>
+              <input
+                id="creationYear"
+                name="creationYear"
+                type="number"
+                value={form.creationYear ?? ''}
+                onChange={onChange}
+                className={theme.form.input}
+                placeholder={new Date().getFullYear().toString()}
+                defaultValue={new Date().getFullYear()}
+                style={{ marginRight: '1rem', maxWidth: '300px' }}
               />
+
+              <label htmlFor="isPublished" className={theme.form.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="isPublished"
+                  checked={!!form.isPublished}
+                  onChange={onChange}
+                  disabled={isSubmitting}
+                />
+                <span>Publish</span>
+              </label>
             </div>
+
+            <h2 className={`text-lg font-medium mb-4 mt-4 ${theme.text.h1}`}>
+              Description
+            </h2>
+            <MarkdownEditor
+              value={form.description ?? ''}
+              onChange={(value) =>
+                setForm((prev) => ({ ...prev, description: value }))
+              }
+              placeholder="Describe your artwork..."
+              disabled={isSubmitting}
+              minHeight="200px"
+            />
           </div>
 
           {/* Technical Details */}
@@ -318,7 +352,7 @@ export default function EditArtwork() {
             <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
               Technical Details
             </h2>
-
+            {/*
             <div className="grid grid-cols-2 gap-4">
               <div className={theme.form.group}>
                 <label className={theme.form.label}>Clay</label>
@@ -340,48 +374,25 @@ export default function EditArtwork() {
                   disabled={submitting}
                 />
               </div>
-            </div>
-
-            <div className={theme.form.checkboxGroup}>
-              <label className={theme.form.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="isMicrowaveSafe"
-                  checked={!!form.isMicrowaveSafe}
-                  onChange={onChange}
-                  disabled={submitting}
-                />
-                <span>Microwave safe</span>
-              </label>
-              <label className={theme.form.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="isPublished"
-                  checked={!!form.isPublished}
-                  onChange={onChange}
-                  disabled={submitting}
-                />
-                <span>Public</span>
-              </label>
-            </div>
+            </div> */}
           </div>
 
           {/* Form Actions */}
           <div className={theme.form.actions}>
             <button
-              type="submit"
-              disabled={submitting}
-              className={theme.button.primary}
-            >
-              {submitting ? uploadStatus || 'Saving...' : 'Save Changes'}
-            </button>
-            <button
               type="button"
               onClick={() => navigate(-1)}
               className={theme.button.secondary}
-              disabled={submitting}
+              disabled={isSubmitting}
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={theme.button.primary}
+            >
+              {isSubmitting ? uploadStatus || 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

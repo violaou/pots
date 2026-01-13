@@ -6,11 +6,8 @@ import type { Artwork, ArtworkImage, ArtworkListItem } from '../../types'
 export interface CreateArtworkInput {
   title: string
   description?: string
-  materials?: string
-  clay?: string
-  cone?: string
-  isMicrowaveSafe: boolean
-  altText?: string
+  creationYear?: string
+  isPublished?: boolean
   images: {
     cdnUrl: string
     alt?: string
@@ -24,10 +21,9 @@ export interface CreateArtworkInput {
 export interface ArtworkUpdateInput {
   title?: string
   description?: string
-  clay?: string
-  cone?: string | number
-  isMicrowaveSafe?: boolean
+  creationYear?: number | string
   isPublished?: boolean
+  tags?: string[]
 }
 
 /**
@@ -59,6 +55,14 @@ export interface ImageChanges {
   additions: AddImageInput[]
 }
 
+/**
+ * Input for creating/updating artwork tags.
+ */
+export interface ArtworkTagInput {
+  tagName: string
+  tagValue: string
+}
+
 // Re-export domain types for convenience
-export type { Artwork, ArtworkImage, ArtworkListItem }
+export type { Artwork, ArtworkImage, ArtworkListItem, ArtworkTag }
 

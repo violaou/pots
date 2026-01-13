@@ -41,11 +41,7 @@ export interface Artwork {
   slug: string
   title: string
   description?: string
-  materials?: string
-  clay?: string
-  cone?: number
-  altText?: string
-  isMicrowaveSafe: boolean
+  creationYear?: number
   isPublished: boolean
   createdAt: string
   updatedAt: string
@@ -59,4 +55,12 @@ export interface ArtworkListItem {
   heroImageUrl: string
   sortOrder?: number
   isPublished?: boolean
+}
+
+export interface ArtworkTag {
+  id: string
+  artworkId: string
+  tagName: string
+  tagValue: string
+  createdAt: string
 }

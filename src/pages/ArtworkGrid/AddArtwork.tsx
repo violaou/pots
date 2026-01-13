@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 import {
   ImageManagementSection,
+  MarkdownEditor,
   managedToImagePreviews,
   type ManagedImage
 } from '../../components'
@@ -20,10 +21,7 @@ const artworkSchema = z.object({
     .min(1, 'Title is required')
     .max(100, 'Title must be less than 100 characters'),
   description: z.string().optional(),
-  materials: z.string().optional(),
-  clay: z.string().optional(),
-  cone: z.union([z.string(), z.number()]).optional(),
-  isMicrowaveSafe: z.boolean()
+  creationYear: z.string().optional()
 })
 
 type ArtworkFormData = z.infer<typeof artworkSchema>
@@ -33,19 +31,19 @@ export default function AddArtwork() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<ArtworkFormData>({
     resolver: zodResolver(artworkSchema),
     defaultValues: {
       title: '',
       description: '',
-      materials: '',
-      clay: '',
-      cone: '',
-      isMicrowaveSafe: true
+      creationYear: ''
     }
   })
 
+  const description = watch('description')
   // Image state (separate from form since React Hook Form doesn't handle file previews well)
   const [images, setImages] = useState<ManagedImage[]>([])
   const [imageError, setImageError] = useState<string>('')
@@ -104,10 +102,6 @@ export default function AddArtwork() {
       const artwork = await createArtwork({
         title: data.title,
         description: data.description,
-        materials: data.materials,
-        clay: data.clay,
-        cone: typeof data.cone === 'number' ? String(data.cone) : data.cone,
-        isMicrowaveSafe: data.isMicrowaveSafe,
         images: uploadedImages
       })
 
@@ -130,25 +124,12 @@ export default function AddArtwork() {
   return (
     <div className={theme.layout.page}>
       <div className={theme.layout.container}>
-        <div className={theme.layout.header}>
-          <div>
-            <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
-              Add New Artwork
-            </h1>
-            <p className={theme.text.muted}>
-              Upload images and provide details about your artwork
-            </p>
-          </div>
-          <Link to="/gallery" className={theme.button.secondary}>
-            Back to Gallery
-          </Link>
-        </div>
+        <h1 className={`text-2xl font-medium ${theme.text.h1}`}>
+          Add New Artwork
+        </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className={theme.section}>
-            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
-              Images
-            </h2>
             {isUsingMockUpload && (
               <div className={`mb-4 ${theme.alert.warning}`}>
                 <strong>Dev Mode:</strong> Images will use local blob URLs (not
@@ -171,62 +152,80 @@ export default function AddArtwork() {
             <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
               Basic Information
             </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={theme.form.group}>
-                <label htmlFor="title" className={theme.form.labelRequired}>
-                  Title *
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  {...register('title')}
-                  className={[
-                    theme.form.input,
-                    errors.title && theme.form.fieldError
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  placeholder="Enter artwork title"
-                />
-                {errors.title && (
-                  <p className={theme.form.error}>{errors.title.message}</p>
-                )}
-              </div>
-
-              <div className={theme.form.group}>
-                <label htmlFor="materials" className={theme.form.labelRequired}>
-                  Materials
-                </label>
-                <input
-                  id="materials"
-                  type="text"
-                  {...register('materials')}
-                  className={theme.form.input}
-                  placeholder="e.g., Stoneware, Glaze"
-                />
-              </div>
-            </div>
-
-            <div className={theme.form.group}>
-              <label htmlFor="description" className={theme.form.labelRequired}>
-                Description
+            <div className={theme.form.inlineGroup}>
+              <label
+                htmlFor="title"
+                className={theme.form.label}
+                style={{ marginRight: '1rem', minWidth: '80px' }}
+              >
+                Title
               </label>
-              <textarea
-                id="description"
-                {...register('description')}
-                className={theme.form.textarea}
-                placeholder="Describe your artwork..."
+              <input
+                id="title"
+                type="text"
+                {...register('title')}
+                className={[
+                  theme.form.input,
+                  errors.title && theme.form.fieldError
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                placeholder="Enter artwork title"
               />
+              {errors.title && (
+                <p className={theme.form.error}>{errors.title.message}</p>
+              )}
             </div>
+
+            <div className={theme.form.inlineGroup}>
+              <label
+                htmlFor="creationYear"
+                className={theme.form.label}
+                style={{ marginRight: '1rem', minWidth: '80px' }}
+              >
+                Year
+              </label>
+              <input
+                id="creationYear"
+                type="number"
+                {...register('creationYear')}
+                className={theme.form.input}
+                placeholder={new Date().getFullYear().toString()}
+                defaultValue={new Date().getFullYear()}
+                style={{ marginRight: '1rem', maxWidth: '300px' }}
+              />
+
+              <label htmlFor="isPublished" className={theme.form.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="isPublished"
+                  checked={true}
+                  onChange={() => {}}
+                  disabled={isSubmitting}
+                />
+                <span>Publish</span>
+              </label>
+            </div>
+
+            <h2 className={`text-lg font-medium mb-4 mt-4 ${theme.text.h1}`}>
+              Description
+            </h2>
+            <MarkdownEditor
+              value={description ?? ''}
+              onChange={(value) => setValue('description', value)}
+              placeholder="Describe your artwork..."
+              disabled={isSubmitting}
+              minHeight="200px"
+            />
           </div>
 
+          {/* Technical Details */}
           <div className={theme.section}>
-            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+            <h2 className={`text-lg font-medium mb-4 mt-4 ${theme.text.h1}`}>
               Technical Details
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className={theme.form.group}>
                 <label htmlFor="clay" className={theme.form.labelRequired}>
                   Clay Type
@@ -251,27 +250,19 @@ export default function AddArtwork() {
                   className={theme.form.input}
                   placeholder="e.g., 6, 10, 04"
                 />
-              </div>
-            </div>
-
-            <div className={theme.form.group}>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  {...register('isMicrowaveSafe')}
-                  className={theme.form.checkbox}
-                />
-                <span className={`ml-2 text-sm ${theme.text.body}`}>
-                  Microwave safe
-                </span>
-              </label>
-            </div>
+              </div> */}
           </div>
 
-          <div className="flex justify-end space-x-4 pt-6 border-t border-neutral-200 dark:border-neutral-700">
-            <Link to="/gallery" className={theme.button.secondary}>
+          {/* Form Actions */}
+          <div className={theme.form.actions}>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className={theme.button.secondary}
+              disabled={isSubmitting}
+            >
               Cancel
-            </Link>
+            </button>
             <button
               type="submit"
               disabled={isSubmitting}
