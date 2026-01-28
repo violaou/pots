@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase/client'
+import { getWriteClient,supabase } from '../../supabase/client'
 import type { ArtworkTag } from '../../types'
 import { requireAdmin } from './cache'
 import type { ArtworkListItem, ArtworkTagInput } from './types'
@@ -40,7 +40,7 @@ export async function addArtworkTag(
 ): Promise<ArtworkTag> {
   await requireAdmin()
 
-  const { data, error } = await supabase
+  const { data, error } = await getWriteClient()
     .from('artwork_tags')
     .insert({
       artwork_id: artworkId,
@@ -70,7 +70,7 @@ export async function addArtworkTag(
 export async function removeArtworkTag(tagId: string): Promise<void> {
   await requireAdmin()
 
-  const { error } = await supabase
+  const { error } = await getWriteClient()
     .from('artwork_tags')
     .delete()
     .eq('id', tagId)
@@ -91,7 +91,7 @@ export async function setArtworkTags(
   await requireAdmin()
 
   // Delete existing tags
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await getWriteClient()
     .from('artwork_tags')
     .delete()
     .eq('artwork_id', artworkId)
@@ -110,7 +110,7 @@ export async function setArtworkTags(
     tag_value: tag.tagValue
   }))
 
-  const { data, error: insertError } = await supabase
+  const { data, error: insertError } = await getWriteClient()
     .from('artwork_tags')
     .insert(inserts)
     .select()

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,11 +7,13 @@ import { z } from 'zod'
 import {
   ImageManagementSection,
   MarkdownEditor,
+  TagsEditor,
   managedToImagePreviews,
-  type ManagedImage
+  type ManagedImage,
+  type TagItem
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
-import { createArtwork } from '../../services/artwork-service/index'
+import { createArtwork, setArtworkTags } from '../../services/artwork-service/index'
 import { uploadImage, isMockMode } from '../../services/s3-upload'
 import { theme } from '../../styles/theme'
 
@@ -39,7 +41,7 @@ export default function AddArtwork() {
     defaultValues: {
       title: '',
       description: '',
-      creationYear: ''
+      creationYear: new Date().getFullYear().toString()
     }
   })
 
@@ -48,6 +50,7 @@ export default function AddArtwork() {
   const [images, setImages] = useState<ManagedImage[]>([])
   const [imageError, setImageError] = useState<string>('')
   const [uploadStatus, setUploadStatus] = useState<string>('')
+  const [tags, setTags] = useState<TagItem[]>([])
 
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
@@ -102,8 +105,18 @@ export default function AddArtwork() {
       const artwork = await createArtwork({
         title: data.title,
         description: data.description,
+        creationYear: data.creationYear,
         images: uploadedImages
       })
+
+      // Step 3: Save tags if any
+      if (tags.length > 0) {
+        setUploadStatus('Saving tags...')
+        await setArtworkTags(artwork.id, tags.map(t => ({
+          tagName: t.tagName,
+          tagValue: t.tagValue
+        })))
+      }
 
       setUploadStatus('')
       if (import.meta.env.DEV) {
@@ -191,7 +204,6 @@ export default function AddArtwork() {
                 {...register('creationYear')}
                 className={theme.form.input}
                 placeholder={new Date().getFullYear().toString()}
-                defaultValue={new Date().getFullYear()}
                 style={{ marginRight: '1rem', maxWidth: '300px' }}
               />
 
@@ -219,38 +231,16 @@ export default function AddArtwork() {
             />
           </div>
 
-          {/* Technical Details */}
+          {/* Tags */}
           <div className={theme.section}>
-            <h2 className={`text-lg font-medium mb-4 mt-4 ${theme.text.h1}`}>
-              Technical Details
+            <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
+              Tags
             </h2>
-
-            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={theme.form.group}>
-                <label htmlFor="clay" className={theme.form.labelRequired}>
-                  Clay Type
-                </label>
-                <input
-                  id="clay"
-                  type="text"
-                  {...register('clay')}
-                  className={theme.form.input}
-                  placeholder="e.g., Stoneware, Porcelain"
-                />
-              </div>
-
-              <div className={theme.form.group}>
-                <label htmlFor="cone" className={theme.form.labelRequired}>
-                  Firing Cone
-                </label>
-                <input
-                  id="cone"
-                  type="text"
-                  {...register('cone')}
-                  className={theme.form.input}
-                  placeholder="e.g., 6, 10, 04"
-                />
-              </div> */}
+            <TagsEditor
+              tags={tags}
+              onChange={setTags}
+              disabled={isSubmitting}
+            />
           </div>
 
           {/* Form Actions */}

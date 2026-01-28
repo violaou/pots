@@ -8,10 +8,11 @@ import { useAuth } from '../../contexts/AuthContext'
 import { isVideoFile } from '../../hooks/useImageUpload'
 import {
   deleteArtwork,
+  getArtworkTags,
   getArtworkWithImages
 } from '../../services/artwork-service/index'
 import { theme } from '../../styles/theme'
-import type { Artwork, ArtworkImage } from '../../types'
+import type { Artwork, ArtworkImage, ArtworkTag } from '../../types'
 
 /**
  * Sort the artwork images by their sort order,
@@ -144,6 +145,7 @@ export function ArtworkDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [artwork, setArtwork] = useState<Artwork | null>(null)
+  const [tags, setTags] = useState<ArtworkTag[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -155,7 +157,15 @@ export function ArtworkDetail() {
     setIsLoading(true)
     getArtworkWithImages(slug)
       .then((data) => {
-        if (isMounted) setArtwork(data)
+        if (isMounted) {
+          setArtwork(data)
+          // Fetch tags if we have artwork
+          if (data) {
+            getArtworkTags(data.id).then((tagData) => {
+              if (isMounted) setTags(tagData)
+            })
+          }
+        }
       })
       .finally(() => {
         if (isMounted) setIsLoading(false)
@@ -233,6 +243,19 @@ export function ArtworkDetail() {
               {artwork.description && (
                 <div className="prose prose-neutral dark:prose-invert max-w-none prose-sm">
                   <Markdown>{artwork.description}</Markdown>
+                </div>
+              )}
+
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                    >
+                      {tag.tagName}: {tag.tagValue}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>

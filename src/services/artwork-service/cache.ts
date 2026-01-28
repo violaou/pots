@@ -60,8 +60,18 @@ export function removeFromDetailCache(slug: string): void {
   artworkDetailCache.delete(slug)
 }
 
+// Check if we're in local dev mode with auth bypass
+const isLocalDevBypass =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_LOGGED_IN === 'true'
+
 // Auth helper
 export async function requireAdmin(): Promise<string> {
+  // In local dev with auth bypass, skip actual auth check
+  if (isLocalDevBypass) {
+    return 'dev-admin'
+  }
+
   const user = await getCurrentAuthUser()
   if (!user) {
     throw new Error('Authentication required')

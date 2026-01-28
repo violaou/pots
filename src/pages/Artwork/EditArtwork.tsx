@@ -5,15 +5,19 @@ import { z } from 'zod'
 import {
   ImageManagementSection,
   MarkdownEditor,
+  TagsEditor,
   artworkImagesToManaged,
-  type ManagedImage
+  type ManagedImage,
+  type TagItem
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import { isVideoFile } from '../../hooks/useImageUpload'
 import {
   getArtworkWithImages,
   updateArtwork,
-  saveArtworkImages
+  saveArtworkImages,
+  getArtworkTags,
+  setArtworkTags
 } from '../../services/artwork-service/index'
 import { uploadImage, isMockMode } from '../../services/s3-upload'
 import { theme } from '../../styles/theme'
@@ -40,6 +44,7 @@ export default function EditArtwork() {
   })
   const [images, setImages] = useState<ManagedImage[]>([])
   const [originalImages, setOriginalImages] = useState<ManagedImage[]>([])
+  const [tags, setTags] = useState<TagItem[]>([])
   const [isSubmitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState<string>('')
@@ -56,11 +61,22 @@ export default function EditArtwork() {
         setForm({
           title: data.title,
           description: data.description ?? '',
+          creationYear: data.creationYear?.toString() ?? '',
           isPublished: data.isPublished
         })
         const managedImages = artworkImagesToManaged(data.images)
         setImages(managedImages)
         setOriginalImages(managedImages)
+        // Load tags
+        getArtworkTags(data.id).then((artworkTags) => {
+          if (isMounted) {
+            setTags(artworkTags.map(t => ({
+              id: t.id,
+              tagName: t.tagName,
+              tagValue: t.tagValue
+            })))
+          }
+        })
       }
     })
     return () => {
@@ -208,6 +224,13 @@ export default function EditArtwork() {
         })
       }
 
+      // Step 5: Save tags
+      setUploadStatus('Saving tags...')
+      await setArtworkTags(artwork.id, tags.map(t => ({
+        tagName: t.tagName,
+        tagValue: t.tagValue
+      })))
+
       setUploadStatus('')
       navigate(`/gallery/${slug}`)
     } catch (err) {
@@ -313,11 +336,10 @@ export default function EditArtwork() {
                 id="creationYear"
                 name="creationYear"
                 type="number"
-                value={form.creationYear ?? ''}
+                value={form.creationYear}
                 onChange={onChange}
                 className={theme.form.input}
                 placeholder={new Date().getFullYear().toString()}
-                defaultValue={new Date().getFullYear()}
                 style={{ marginRight: '1rem', maxWidth: '300px' }}
               />
 
@@ -347,34 +369,16 @@ export default function EditArtwork() {
             />
           </div>
 
-          {/* Technical Details */}
+          {/* Tags */}
           <div className={theme.section}>
             <h2 className={`text-lg font-medium mb-4 ${theme.text.h1}`}>
-              Technical Details
+              Tags
             </h2>
-            {/*
-            <div className="grid grid-cols-2 gap-4">
-              <div className={theme.form.group}>
-                <label className={theme.form.label}>Clay</label>
-                <input
-                  name="clay"
-                  value={form.clay ?? ''}
-                  onChange={onChange}
-                  className={theme.form.input}
-                  disabled={submitting}
-                />
-              </div>
-              <div className={theme.form.group}>
-                <label className={theme.form.label}>Cone</label>
-                <input
-                  name="cone"
-                  value={String(form.cone ?? '')}
-                  onChange={onChange}
-                  className={theme.form.input}
-                  disabled={submitting}
-                />
-              </div>
-            </div> */}
+            <TagsEditor
+              tags={tags}
+              onChange={setTags}
+              disabled={isSubmitting}
+            />
           </div>
 
           {/* Form Actions */}

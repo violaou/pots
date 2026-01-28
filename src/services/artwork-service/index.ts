@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase/client'
+import { getWriteClient,supabase } from '../../supabase/client'
 import { toSlug } from '../../utils/slug'
 import {
   clearListCache,
@@ -88,7 +88,7 @@ export async function createArtwork(input: CreateArtworkInput): Promise<Artwork>
 
   const slug = toSlug(input.title)
 
-  const { data: artworkData, error: artworkError } = await supabase
+  const { data: artworkData, error: artworkError } = await getWriteClient()
     .from('artworks')
     .insert({
       slug,
@@ -115,14 +115,14 @@ export async function createArtwork(input: CreateArtworkInput): Promise<Artwork>
     is_hero: img.isHero
   }))
 
-  const { data: imagesData, error: imagesError } = await supabase
+  const { data: imagesData, error: imagesError } = await getWriteClient()
     .from('artwork_images')
     .insert(imageInserts)
     .select()
 
   if (imagesError) {
     console.error('[artwork-service] Failed to create images, rolling back:', imagesError)
-    await supabase.from('artworks').delete().eq('id', artworkId)
+    await getWriteClient().from('artworks').delete().eq('id', artworkId)
     throw new Error(`Failed to create artwork images: ${imagesError.message}`)
   }
 
@@ -196,7 +196,7 @@ export async function updateArtwork(
     if ('creationYear' in updates) payload.creation_year = updates.creationYear ? parseInt(String(updates.creationYear), 10) : null
     if ('isPublished' in updates) payload.is_published = updates.isPublished
 
-    const { error } = await supabase
+    const { error } = await getWriteClient()
       .from('artworks')
       .update(payload)
       .eq('slug', slug)
@@ -232,7 +232,7 @@ export async function updateArtworkSortOrder(
 
   // Update each artwork's sort_order
   const updates = items.map(({ id, sortOrder }) =>
-    supabase
+    getWriteClient()
       .from('artworks')
       .update({ sort_order: sortOrder })
       .eq('id', id)
@@ -263,7 +263,7 @@ export async function deleteArtwork(slug: string): Promise<void> {
   removeFromDetailCache(slug)
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getWriteClient()
       .from('artworks')
       .delete()
       .eq('slug', slug)

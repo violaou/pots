@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase/client'
+import { getWriteClient,supabase } from '../../supabase/client'
 import { deleteImage as deleteDoSpacesImage, isDoSpacesUrl } from '../s3-upload'
 import { clearDetailCache, clearListCache,requireAdmin } from './cache'
 import type { AddImageInput, ArtworkImage, ImageChanges,UpdateImageInput } from './types'
@@ -14,6 +14,7 @@ async function updateArtworkImages(
   // Separate sort order updates from other updates
   const sortOrderUpdates = updates.filter((u) => u.sortOrder !== undefined)
   const otherUpdates = updates.map((u) => {
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     const { sortOrder: _, ...rest } = u
     return rest
   })
@@ -21,7 +22,7 @@ async function updateArtworkImages(
   // First pass: set sort_order to negative values to avoid conflicts
   if (sortOrderUpdates.length > 0) {
     for (const update of sortOrderUpdates) {
-      const { error } = await supabase
+      const { error } = await getWriteClient()
         .from('artwork_images')
         .update({ sort_order: -(update.sortOrder! + 1000) })
         .eq('id', update.id)
@@ -35,7 +36,7 @@ async function updateArtworkImages(
 
     // Second pass: set final sort_order values
     for (const update of sortOrderUpdates) {
-      const { error } = await supabase
+      const { error } = await getWriteClient()
         .from('artwork_images')
         .update({ sort_order: update.sortOrder })
         .eq('id', update.id)
@@ -62,7 +63,7 @@ async function updateArtworkImages(
     if (update.isHero !== undefined) payload.is_hero = update.isHero
 
     if (Object.keys(payload).length > 0) {
-      const { error } = await supabase
+      const { error } = await getWriteClient()
         .from('artwork_images')
         .update(payload)
         .eq('id', update.id)
@@ -93,7 +94,7 @@ async function deleteArtworkImage(
     .eq('artwork_id', artworkId)
     .single()
 
-  const { error } = await supabase
+  const { error } = await getWriteClient()
     .from('artwork_images')
     .delete()
     .eq('id', imageId)
