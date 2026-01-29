@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,7 +10,8 @@ import {
   TagsEditor,
   managedToImagePreviews,
   type ManagedImage,
-  type TagItem
+  type TagItem,
+  type TagsEditorRef
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import { createArtwork, setArtworkTags } from '../../services/artwork-service/index'
@@ -51,6 +52,7 @@ export default function AddArtwork() {
   const [imageError, setImageError] = useState<string>('')
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [tags, setTags] = useState<TagItem[]>([])
+  const tagsEditorRef = useRef<TagsEditorRef>(null)
 
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
@@ -109,10 +111,11 @@ export default function AddArtwork() {
         images: uploadedImages
       })
 
-      // Step 3: Save tags if any
-      if (tags.length > 0) {
+      // Step 3: Save tags (flush any pending tag first)
+      const finalTags = tagsEditorRef.current?.flushPending() ?? tags
+      if (finalTags.length > 0) {
         setUploadStatus('Saving tags...')
-        await setArtworkTags(artwork.id, tags.map(t => ({
+        await setArtworkTags(artwork.id, finalTags.map(t => ({
           tagName: t.tagName,
           tagValue: t.tagValue
         })))
@@ -237,6 +240,7 @@ export default function AddArtwork() {
               Tags
             </h2>
             <TagsEditor
+              ref={tagsEditorRef}
               tags={tags}
               onChange={setTags}
               disabled={isSubmitting}

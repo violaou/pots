@@ -10,5 +10,5 @@ export {
   managedToImagePreviews} from './ImageManagementSection'
 export { MarkdownEditor } from './MarkdownEditor'
 export { default as Sidebar } from './Sidebar'
-export { type TagItem,TagsEditor } from './TagsEditor'
+export { type TagItem, TagsEditor,type TagsEditorRef } from './TagsEditor'
 export { TopBar } from './TopBar'

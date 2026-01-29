@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 
@@ -8,7 +8,8 @@ import {
   TagsEditor,
   artworkImagesToManaged,
   type ManagedImage,
-  type TagItem
+  type TagItem,
+  type TagsEditorRef
 } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
 import { isVideoFile } from '../../hooks/useImageUpload'
@@ -45,6 +46,7 @@ export default function EditArtwork() {
   const [images, setImages] = useState<ManagedImage[]>([])
   const [originalImages, setOriginalImages] = useState<ManagedImage[]>([])
   const [tags, setTags] = useState<TagItem[]>([])
+  const tagsEditorRef = useRef<TagsEditorRef>(null)
   const [isSubmitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState<string>('')
@@ -224,9 +226,10 @@ export default function EditArtwork() {
         })
       }
 
-      // Step 5: Save tags
+      // Step 5: Save tags (flush any pending tag first)
       setUploadStatus('Saving tags...')
-      await setArtworkTags(artwork.id, tags.map(t => ({
+      const finalTags = tagsEditorRef.current?.flushPending() ?? tags
+      await setArtworkTags(artwork.id, finalTags.map(t => ({
         tagName: t.tagName,
         tagValue: t.tagValue
       })))
@@ -375,6 +378,7 @@ export default function EditArtwork() {
               Tags
             </h2>
             <TagsEditor
+              ref={tagsEditorRef}
               tags={tags}
               onChange={setTags}
               disabled={isSubmitting}
